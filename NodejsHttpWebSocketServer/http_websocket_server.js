@@ -25,30 +25,20 @@ function broadcast_message(message)
 
 /*****************************************websocket server************************************************/
 var ws_nums = 1;
+//服务器监听时触发
 ws_server.on("listening", function listen(){
 	console.log("websocket server start listenning on port 8888.");
 });
+//接收到客户端请求时触发
 ws_server.on("connection", function connection(ws, req) {
-	const ip = req.connection.remoteAddress;
-	const port = req.connection.remotePort;
-	const clientName = ip + port;
-	console.log("%s is connected", clientName)
-	// 发送欢迎信息给客户端
-	ws.send("Welcome " + clientName);
 	//接收到消息
 	ws.on('message', function incoming(message) {
 		var json = {"id":1,"arg":{"userid":300}}
-		console.log("received: %s from %s", message, clientName);
+		console.log("received:%s", message);
 		//将userid ws加入map
 		ws_nums = ws_nums + 1;
 		map_ws_userid.set(ws_nums, ws);
-		console.log("add map_ws_userid size %d ws_nums %d", map_ws_userid.size, ws_nums);
-		// 广播消息给所有客户端
-		ws_server.clients.forEach(function each(client) {
-			if (client.readyState === WebSocket.OPEN) {
-				client.send( clientName + " -> " + message);
-			}
-		});
+		console.log("add userid %d, map_ws_userid size %d", ws_nums, map_ws_userid.size);
 	});
 	//客户端关闭调用
 	ws.on("close", function close() {
@@ -56,12 +46,10 @@ ws_server.on("connection", function connection(ws, req) {
 		for (var item of map_ws_userid.entries()) {
 			if(item[1] == ws)
 			{
-				console.log("delete userid %d", item[0]);
 				map_ws_userid.delete(item[0]);
-				console.log("map_ws_userid size %d", map_ws_userid.size);
+				console.log("delete userid %d, map_ws_userid size %d", item[0], map_ws_userid.size);
 			}
 		}
-		console.log("close");
 	});
 });
 
