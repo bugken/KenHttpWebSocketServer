@@ -120,6 +120,7 @@ http_server.on("request", function (req, res) {
 	}); 
 	req.on("end",function(){  
 		data = JSON.parse(data);  
+		console.log("received data:%s", data);
 		if(data.id == 1)//在线人数
 		{
 			retStr = query_users_online();
