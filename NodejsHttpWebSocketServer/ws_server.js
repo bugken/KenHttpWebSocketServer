@@ -5,6 +5,10 @@ const server = new WebSocket.Server({ port: 8888 });
 var map_ws_userid = new Map();
 var ws_nums = 1;
 
+ws_server.on("listening", function listen(){
+	console.log("websocket server start listenning on port 8888.");
+});
+
 server.on('connection', function connection(ws, req) {
 	const ip = req.connection.remoteAddress;
 	const port = req.connection.remotePort;
