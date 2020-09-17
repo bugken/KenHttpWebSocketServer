@@ -22,7 +22,7 @@ server.on('connection', function connection(ws, req) {
 
   ws.on('message', function incoming(message) {
     console.log('received: %s from %s', message, clientName);
-    
+	
     // 广播消息给所有客户端
     server.clients.forEach(function each(client) {
       if (client.readyState === WebSocket.OPEN) {

@@ -1,0 +1,19 @@
+{
+  "name": "NodejsHttpWebSocketServer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "http_server.js",
+  "dependencies": {
+    "http": "^0.0.1-security",
+    "nodejs-websocket": "^1.7.2",
+    "url": "^0.11.0",
+    "ws": "^7.3.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
