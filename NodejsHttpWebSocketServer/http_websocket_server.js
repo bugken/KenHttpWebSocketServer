@@ -19,7 +19,7 @@ function broadcast_message(message)
 		item[1].send(message);
 	}
 }
-//发送消息给特定顽疾
+//发送消息给特定玩家
 function notify_message(userid, message)
 {
 	var ret = 0;
@@ -33,10 +33,13 @@ function notify_message(userid, message)
 		console.log("userid %d 不在线", userid);
 		ret = -1;
 	}
+	return ret;
 }
 //发送数据
 function send_message(json_data)
 {
+	var ret = 0;
+	var error_message = "";
 	if(json_data.userid > 0)
 	{
 		//发送消息给特定玩家玩家
@@ -44,8 +47,7 @@ function send_message(json_data)
 		ret = notify_message(json_data.userid, json_data.message);
 		if(ret == -1)
 		{
-			var json = {"ret":ret, "error_message":"userid:%d 不在线";};
-			return json;
+			error_message = "userid:%d 不在线".format(json_data.userid);
 		}
 	}
 	else if(json_data.userid == 0)
@@ -55,10 +57,10 @@ function send_message(json_data)
 	}
 	else
 	{
-		var json = {"ret":-1, "error_message":"userid:%d 不正确";};
-		return json;
+		ret = -1;
+		error_message = "userid %d 不正确".format(json_data.userid);
 	}
-	var json = {"ret":0, "error_message":""};
+	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
 
