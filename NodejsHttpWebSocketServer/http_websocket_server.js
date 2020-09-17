@@ -64,7 +64,7 @@ function send_message(json_data)
 
 /*****************************************websocket server************************************************/
 /*
-{"id":1, "args":{"userid":123}}
+{"id":1, "arg":{"userid":123}}
 */
 //服务器监听时触发
 ws_server.on("listening", function listen(){
@@ -77,7 +77,7 @@ ws_server.on("connection", function connection(ws, req) {
 		var data = JSON.parse(message); 
 		console.log("received:%s", data);
 		//将userid ws加入map
-		var userid = data.args.userid;
+		var userid = data.arg.userid;
 		map_ws_userid.set(userid, ws);
 		console.log("add userid %d, map_ws_userid size %d", userid, map_ws_userid.size);
 	});
@@ -97,8 +97,8 @@ ws_server.on("connection", function connection(ws, req) {
 
 /*****************************************http server************************************************/
 /*
-{"id":1, "args":{}}
-{"id":2, "args":{"userid":234, "message":"nihao"}}//userid为0时候,发消息给所有玩家,userid不为0时候,发送消息给该玩家
+{"id":1, "arg":{}}
+{"id":2, "arg":{"userid":234, "message":"nihao"}}//userid为0时候,发消息给所有玩家,userid不为0时候,发送消息给该玩家
 */
 //监听端口
 http_server.listen(8889, "0.0.0.0");
@@ -125,7 +125,7 @@ http_server.on("request", function (req, res) {
 		}
 		else if(data.id == 2)//发送消息
 		{
-			retStr = send_message(data.args);	
+			retStr = send_message(data.arg);	
 			res.end(JSON.stringify(retStr));
 		}
 		else
