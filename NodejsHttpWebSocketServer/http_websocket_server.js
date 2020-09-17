@@ -1,5 +1,6 @@
 const WebSocket = require("ws");
 const http = require("http");
+const util = require("util");
 
 const ws_server = new WebSocket.Server({ port: 8888 });
 const http_server = http.createServer();
@@ -47,7 +48,7 @@ function send_message(json_data)
 		ret = notify_message(json_data.userid, json_data.message);
 		if(ret == -1)
 		{
-			error_message = "userid:%d 不在线".format(json_data.userid);
+			error_message = util.format("userid:%d 不在线", json_data.userid);
 		}
 	}
 	else if(json_data.userid == 0)
@@ -58,7 +59,7 @@ function send_message(json_data)
 	else
 	{
 		ret = -1;
-		error_message = "userid %d 不正确".format(json_data.userid);
+		error_message = util.format("userid %d 不正确", json_data.userid);
 	}
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
