@@ -20,10 +20,15 @@ new Promise(function(resolve, reject){
 	}
     setTimeout(function(){
         console.log("start send data. sockets size %d.", sockets.length);
+		var userid = 1;
+		var json = {"id":1, "arg":{"userid":userid}};
 		for(i = 0; i < sockets.length; i++)
 		{
+			userid = userid + 1;
+			json = {"id":1, "arg":{"userid":userid}};
+			str = JSON.stringify(json);
 			if (socket.readyState == WebSocket.OPEN) {
-				socket.send("I'm websocket client!");
+				socket.send(str);
 			} 
 		}
         resolve('随便什么数据');
