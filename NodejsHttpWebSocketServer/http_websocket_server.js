@@ -8,23 +8,64 @@ var map_ws_userid = new Map();
 //在线人数查询
 function query_users_online()
 {
-	var ret = 0;
-	var counts = 300;
-	
-	var json = {"ret":ret, "users_online":counts};
+	var counts = ws_server.clients.size;;
+	var json = {"ret":0, "users_online":counts};
 	return json;
 }
-//发送数据
+//广播数据给用户
 function broadcast_message(message)
 {
+	for (var item of map_ws_userid.entries()) {
+		item[1].send(message);
+	}
+}
+//发送消息给特定顽疾
+function notify_message(userid, message)
+{
 	var ret = 0;
-	
-	var json = {"ret":ret};
+	if(map_ws_userid.has(userid))
+	{
+		var ws = map_ws_userid.get(userid);
+		ws.send(message);
+	}
+	else
+	{
+		ret = -1;
+	}
+}
+//发送数据
+function send_message(json_data)
+{
+	var ret = 0;
+	var error_message = "";
+	if(json_data.userid > 0)
+	{
+		//发送消息给特定玩家玩家
+		var ret = 0;
+		ret = notify_message(json_data.userid, json_data.message);
+		if(ret == -1)
+		{
+			error_message = "userid:%d 不在线";
+		}
+	}
+	else if(json_data.userid == 0)
+	{
+		//广播消息
+		broadcast_message(json_data.message);
+	}
+	else
+	{
+		ret = -1;
+		error_message = "userid %d不在线".format(json_data.userid);
+	}
+	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
 
 /*****************************************websocket server************************************************/
-var ws_nums = 1;
+/*
+{"id":1, "args":{"userid":123}}
+*/
 //服务器监听时触发
 ws_server.on("listening", function listen(){
 	console.log("websocket server start listenning on port 8888.");
@@ -33,12 +74,12 @@ ws_server.on("listening", function listen(){
 ws_server.on("connection", function connection(ws, req) {
 	//接收到消息
 	ws.on('message', function incoming(message) {
-		var json = {"id":1,"arg":{"userid":300}}
-		console.log("received:%s", message);
+		var data = JSON.parse(message); 
+		console.log("received:%s", data);
 		//将userid ws加入map
-		ws_nums = ws_nums + 1;
-		map_ws_userid.set(ws_nums, ws);
-		console.log("add userid %d, map_ws_userid size %d", ws_nums, map_ws_userid.size);
+		var userid = data.args.userid;
+		map_ws_userid.set(userid, ws);
+		console.log("add userid %d, map_ws_userid size %d", userid, map_ws_userid.size);
 	});
 	//客户端关闭调用
 	ws.on("close", function close() {
@@ -55,6 +96,10 @@ ws_server.on("connection", function connection(ws, req) {
 
 
 /*****************************************http server************************************************/
+/*
+{"id":1, "args":{}}
+{"id":2, "args":{"userid":234, "message":"nihao"}}//userid为0时候,发消息给所有玩家,userid不为0时候,发送消息给该玩家
+*/
 //监听端口
 http_server.listen(8889, "0.0.0.0");
 //设置超时时间
@@ -80,7 +125,7 @@ http_server.on("request", function (req, res) {
 		}
 		else if(data.id == 2)//发送消息
 		{
-			retStr = broadcast_message(data.arg);	
+			retStr = send_message(data.args);	
 			res.end(JSON.stringify(retStr));
 		}
 		else
