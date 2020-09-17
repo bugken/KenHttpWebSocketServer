@@ -2,34 +2,41 @@ const WebSocket = require('ws');
 
 const server = new WebSocket.Server({ port: 8888 });
 
+man_ws_userid = new map();
+
 server.on('open', function open() {
-  console.log('connected');
+	console.log('connected');
 });
 
 server.on('close', function close() {
-  console.log('disconnected');
+	console.log('disconnected');
 });
 
 server.on('connection', function connection(ws, req) {
-  const ip = req.connection.remoteAddress;
-  const port = req.connection.remotePort;
-  const clientName = ip + port;
+	const ip = req.connection.remoteAddress;
+	const port = req.connection.remotePort;
+	const clientName = ip + port;
 
-  console.log('%s is connected', clientName)
+	console.log('%s is connected', clientName)
 
-  // 发送欢迎信息给客户端
-  ws.send("Welcome " + clientName);
+	// 发送欢迎信息给客户端
+	ws.send("Welcome " + clientName);
 
-  ws.on('message', function incoming(message) {
-    console.log('received: %s from %s', message, clientName);
-	
-    // 广播消息给所有客户端
-    server.clients.forEach(function each(client) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send( clientName + " -> " + message);
-      }
-    });
+	ws.on('message', function incoming(message) {
+	console.log('received: %s from %s', message, clientName);
+	//将userid ws加入map
+	// 广播消息给所有客户端
+	server.clients.forEach(function each(client) {
+		if (client.readyState === WebSocket.OPEN) {
+			client.send( clientName + " -> " + message);
+		}
+	});
 
-  });
+	});
+
+	ws.on('close', function close() {
+		//将ws从map去掉
+		console.log('close');
+	});
 
 });
