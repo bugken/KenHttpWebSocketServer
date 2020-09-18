@@ -6,10 +6,19 @@ const ws_server = new WebSocket.Server({ port: 8888 });
 const http_server = http.createServer();
 var map_ws_userid = new Map();
 
+//打印在线人数信息，包括在线人数数量和useid
+function dump_users_info()
+{
+	console.log("ws_server.clients.size:%d", ws_server.clients.size);
+	console.log("map_ws_userid size:%d", map_ws_userid.size);
+	for (var item of map_ws_userid.entries()) {
+		console.log("userid:%d online.", item[0]);
+	}
+}
 //在线人数查询
 function query_users_online()
 {
-	var counts = ws_server.clients.size;;
+	var counts = ws_server.clients.size;
 	var json = {"ret":0, "users_online":counts};
 	return json;
 }
@@ -104,13 +113,13 @@ ws_server.on("connection", function connection(ws, req) {
 	{"id":0, "arg":{}}
 //查询在线人数消息格式
 	{"id":1, "arg":{}}
-	返回: 
+	//返回: 
 	{"ret":0, "users_online":120};
 //发送消息格式:
 	//userid为0时候,发消息给所有玩家,userid不为0时候,发送消息给该玩家
 	{"id":2, "arg":{"userid":234, "message":"nihao"}}
-	返回:
-	{"ret":ret, "error_message":error_message};//ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
+	//返回:ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
+	{"ret":ret, "error_message":error_message};
 */
 //监听端口
 http_server.listen(8889, "0.0.0.0");
@@ -125,14 +134,20 @@ http_server.on("request", function (req, res) {
 	//获取http请求传入的数据(json数据)
 	var data = "";  
 	var datajson = "";
-	var retStr = {"ret":1, "error_message":"json id not exist!"};
+	var retStr = {"ret":-1, "error_message":"json id not exist!"};
 	req.on("data",function(chunk){  
 		data += chunk;  
 	}); 
 	req.on("end",function(){  
 		console.log("received data:%s", data);
 		datajson = JSON.parse(data);  
-		if(datajson.id == 1)//在线人数
+		if(datajson.id == 0)//打印在线人数信息，包括在线人数数量和useid
+		{
+			dump_users_info();
+			retStr = {"ret":0, "error_message":""};
+			res.end(JSON.stringify(retStr));
+		}
+		else if(datajson.id == 1)//在线人数
 		{
 			retStr = query_users_online();
 			res.end(JSON.stringify(retStr));
