@@ -28,7 +28,7 @@ new Promise(function(resolve, reject){
 			json = {"id":1, "arg":{"userid":userid}};
 			str = JSON.stringify(json);
 			if (socket.readyState == WebSocket.OPEN) {
-				console.log("send data:%s", json);
+				console.log("send data:%s", str);
 				socket.send(str);
 			} 
 		}
