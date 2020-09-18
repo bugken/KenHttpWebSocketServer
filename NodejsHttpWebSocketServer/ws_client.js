@@ -4,7 +4,7 @@ const sleep = require("sleep");
 var sockets = new Array()
 //测试临界值为1700个client
 new Promise(function(resolve, reject){
-    for(i = 0; i < 500; i++)
+    for(i = 0; i < 10000; i++)
 	{
 		socket = new WebSocket("ws://127.0.0.1:8888/ws");
 		sockets.push(socket);
@@ -33,5 +33,5 @@ new Promise(function(resolve, reject){
 			} 
 		}
         resolve('随便什么数据');
-    }, 2000);
+    }, 20000);
 });
