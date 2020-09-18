@@ -67,7 +67,8 @@ function send_message(json_data)
 
 /*****************************************websocket server************************************************/
 /*
-{"id":1, "arg":{"userid":123}}
+1.{"id":1, "arg":{"userid":123}}
+2.发送信息直接为message
 */
 //服务器监听时触发
 ws_server.on("listening", function listen(){
@@ -99,8 +100,17 @@ ws_server.on("connection", function connection(ws, req) {
 
 /*****************************************http server************************************************/
 /*
-{"id":1, "arg":{}}
-{"id":2, "arg":{"userid":234, "message":"nihao"}}//userid为0时候,发消息给所有玩家,userid不为0时候,发送消息给该玩家
+//打印在线人数和在线用户userid
+	{"id":0, "arg":{}}
+//查询在线人数消息格式
+	{"id":1, "arg":{}}
+	返回: 
+	{"ret":0, "users_online":120};
+//发送消息格式:
+	//userid为0时候,发消息给所有玩家,userid不为0时候,发送消息给该玩家
+	{"id":2, "arg":{"userid":234, "message":"nihao"}}
+	返回:
+	{"ret":ret, "error_message":error_message};//ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
 */
 //监听端口
 http_server.listen(8889, "0.0.0.0");
@@ -114,21 +124,22 @@ http_server.on("listening", function () {
 http_server.on("request", function (req, res) {
 	//获取http请求传入的数据(json数据)
 	var data = "";  
+	var datajson = "";
 	var retStr = {"ret":1, "error_message":"json id not exist!"};
 	req.on("data",function(chunk){  
 		data += chunk;  
 	}); 
 	req.on("end",function(){  
-		data = JSON.parse(data);  
 		console.log("received data:%s", data);
-		if(data.id == 1)//在线人数
+		datajson = JSON.parse(data);  
+		if(datajson.id == 1)//在线人数
 		{
 			retStr = query_users_online();
 			res.end(JSON.stringify(retStr));
 		}
-		else if(data.id == 2)//发送消息
+		else if(datajson.id == 2)//发送消息
 		{
-			retStr = send_message(data.arg);	
+			retStr = send_message(datajson.arg);	
 			res.end(JSON.stringify(retStr));
 		}
 		else
