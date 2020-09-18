@@ -2,7 +2,10 @@ const WebSocket = require("ws");
 const http = require("http");
 const util = require("util");
 
-const ws_server = new WebSocket.Server({ port: 8888 });
+const websocket_server_port = 8888;
+const http_server_port = 8889;
+
+const ws_server = new WebSocket.Server({ port: websocket_server_port });
 const http_server = http.createServer();
 var map_ws_userid = new Map();
 
@@ -81,7 +84,7 @@ function send_message(json_data)
 */
 //服务器监听时触发
 ws_server.on("listening", function listen(){
-	console.log("websocket server start listenning on port 8888.");
+	console.log("websocket server start listenning on port %d.", websocket_server_port);
 });
 //接收到客户端请求时触发
 ws_server.on("connection", function connection(ws, req) {
@@ -122,12 +125,12 @@ ws_server.on("connection", function connection(ws, req) {
 	{"ret":ret, "error_message":error_message};
 */
 //监听端口
-http_server.listen(8889, "0.0.0.0");
+http_server.listen(http_server_port, "0.0.0.0");
 //设置超时时间
 http_server.setTimeout(5 * 60 * 1000);
 //服务器监听时触发
 http_server.on("listening", function () {
-	console.log('http server start listenning on port 8889.');
+	console.log('http server start listenning on port %d.', http_server_port);
 });
 //接收到客户端请求时触发
 http_server.on("request", function (req, res) {
