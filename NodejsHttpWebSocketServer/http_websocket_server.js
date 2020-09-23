@@ -90,11 +90,18 @@ ws_server.on("listening", function listen(){
 ws_server.on("connection", function connection(ws, req) {
 	//接收到消息
 	ws.on('message', function incoming(message) {
-		var data = JSON.parse(message); 
-		//将userid ws加入map
-		var userid = data.arg.userid;
-		map_ws_userid.set(userid, ws);
-		console.log("add userid %d, map_ws_userid size %d", userid, map_ws_userid.size);
+		try
+		{
+			var data = JSON.parse(message); 
+			//将userid ws加入map
+			var userid = data.arg.userid;
+			map_ws_userid.set(userid, ws);
+			console.log("add userid %d, map_ws_userid size %d", userid, map_ws_userid.size);
+		}
+		catch(e)
+		{
+			console.log("Exception error:%s", e.message);
+		}
 	});
 	//客户端关闭调用
 	ws.on("close", function close() {
@@ -137,31 +144,39 @@ http_server.on("request", function (req, res) {
 	//获取http请求传入的数据(json数据)
 	var data = "";  
 	var datajson = "";
-	var retStr = {"ret":-1, "error_message":"json id not exist!"};
+	var retStr = {"ret":-1, "error_message":"json error or json id not exist!"};
 	req.on("data",function(chunk){  
 		data += chunk;  
 	}); 
 	req.on("end",function(){  
 		console.log("received data:%s", data);
-		datajson = JSON.parse(data);  
-		if(datajson.id == 0)//打印在线人数信息，包括在线人数数量和useid
+		try
 		{
-			dump_users_info();
-			retStr = {"ret":0, "error_message":""};
-			res.end(JSON.stringify(retStr));
+			datajson = JSON.parse(data);  
+			if(datajson.id == 0)//打印在线人数信息，包括在线人数数量和useid
+			{
+				dump_users_info();
+				retStr = {"ret":0, "error_message":""};
+				res.end(JSON.stringify(retStr));
+			}
+			else if(datajson.id == 1)//在线人数
+			{
+				retStr = query_users_online();
+				res.end(JSON.stringify(retStr));
+			}
+			else if(datajson.id == 2)//发送消息
+			{
+				retStr = send_message(datajson.arg);	
+				res.end(JSON.stringify(retStr));
+			}
+			else
+			{
+				res.end(JSON.stringify(retStr));
+			}
 		}
-		else if(datajson.id == 1)//在线人数
+		catch(e)
 		{
-			retStr = query_users_online();
-			res.end(JSON.stringify(retStr));
-		}
-		else if(datajson.id == 2)//发送消息
-		{
-			retStr = send_message(datajson.arg);	
-			res.end(JSON.stringify(retStr));
-		}
-		else
-		{
+			console.log("Exception error:%s", e.message);
 			res.end(JSON.stringify(retStr));
 		}
 	});   
