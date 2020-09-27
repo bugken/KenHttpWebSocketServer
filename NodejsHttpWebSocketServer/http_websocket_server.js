@@ -93,10 +93,16 @@ ws_server.on("connection", function connection(ws, req) {
 		try
 		{
 			var data = JSON.parse(message); 
-			//将userid ws加入map
+			var merchant_id = data.arg.merchant_id;
+			if(merchant_id == undefined)
+				merchant_id = 0;
 			var userid = data.arg.userid;
-			map_ws_userid.set(userid, ws);
-			console.log("add userid %d, map_ws_userid size %d", userid, map_ws_userid.size);
+			
+			var key = "";
+			key = key.concat(merchant_id, "_", userid);
+			//将userid ws加入map
+			map_ws_userid.set(key, ws);
+			console.log("add %s userid %d, map_ws_userid size %d", key, userid, map_ws_userid.size);
 		}
 		catch(e)
 		{
@@ -201,3 +207,6 @@ http_server.on("error", function (err) {
 http_server.on("timeout", function (socket) {
 	console.log("连接已超时");
 });
+
+
+
