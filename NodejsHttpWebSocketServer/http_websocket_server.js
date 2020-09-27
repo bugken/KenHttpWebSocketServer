@@ -8,6 +8,8 @@ const http_server_port = 8889;
 const ws_server = new WebSocket.Server({ port: websocket_server_port });
 const http_server = http.createServer();
 var map_ws_userid = new Map();
+//var queue_login_message = new Array();需要使用链表实现
+var g_login_message = "这个是登录消息";
 
 //打印在线人数信息，包括在线人数数量和useid
 function dump_users_info()
@@ -28,8 +30,12 @@ function query_users_online()
 //广播数据给用户
 function broadcast_message(message)
 {
-	for (var item of map_ws_userid.entries()) {
-		item[1].send(message);
+	for (var item of map_ws_userid.entries()) 
+	{
+		json = {"id":200001, "arg":{"userid":item[0],"message": message}};  //200001:客户端弹窗消息
+		str = JSON.stringify(json);
+
+		item[1].send(str);
 	}
 }
 //发送消息给特定玩家
@@ -39,7 +45,10 @@ function notify_message(userid, message)
 	if(map_ws_userid.has(userid))
 	{
 		var ws = map_ws_userid.get(userid);
-		ws.send(message);
+		json = {"id":200001, "arg":{"userid":userid,"message": message}};  //200001:客户端弹窗消息
+		str = JSON.stringify(json);
+
+		ws.send(str);
 	}
 	else
 	{
@@ -77,60 +86,7 @@ function send_message(json_data)
 	return json;
 }
 
-/*****************************************websocket server************************************************/
-/*
-1.{"id":1, "arg":{"userid":123}}
-2.发送信息直接为message
-*/
-//服务器监听时触发
-ws_server.on("listening", function listen(){
-	console.log("websocket server start listenning on port %d.", websocket_server_port);
-});
-//接收到客户端请求时触发
-ws_server.on("connection", function connection(ws, req) {
-	//接收到消息
-	ws.on('message', function incoming(message) {
-		try
-		{
-			var data = JSON.parse(message); 
-			//将userid ws加入map
-			var userid = data.arg.userid;
-			map_ws_userid.set(userid, ws);
-			console.log("add userid %d, map_ws_userid size %d", userid, map_ws_userid.size);
-		}
-		catch(e)
-		{
-			console.log("Exception error:%s", e.message);
-		}
-	});
-	//客户端关闭调用
-	ws.on("close", function close() {
-		//将ws从map去掉
-		for (var item of map_ws_userid.entries()) {
-			if(item[1] == ws)
-			{
-				map_ws_userid.delete(item[0]);
-				console.log("delete userid %d, map_ws_userid size %d", item[0], map_ws_userid.size);
-			}
-		}
-	});
-});
-
-
 /*****************************************http server************************************************/
-/*
-//打印在线人数和在线用户userid
-	{"id":0, "arg":{}}
-//查询在线人数消息格式
-	{"id":1, "arg":{}}
-	//返回: 
-	{"ret":0, "users_online":120};
-//发送消息格式:
-	//userid为0时候,发消息给所有玩家,userid不为0时候,发送消息给该玩家
-	{"id":2, "arg":{"userid":234, "message":"nihao"}}
-	//返回:ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
-	{"ret":ret, "error_message":error_message};
-*/
 //监听端口
 http_server.listen(http_server_port, "0.0.0.0");
 //设置超时时间
@@ -200,4 +156,60 @@ http_server.on("error", function (err) {
 //如果连接超过指定时间没有响应，则触发。超时后，不可再复用已建立的连接，需发请求重新建立连接
 http_server.on("timeout", function (socket) {
 	console.log("连接已超时");
+});
+
+/*****************************************websocket server************************************************/
+//服务器监听时触发
+ws_server.on("listening", function listen(){
+	console.log("websocket server start listenning on port %d.", websocket_server_port);
+});
+//接收到客户端请求时触发
+ws_server.on("connection", function connection(ws, req) {
+	//接收到消息
+	ws.on('message', function incoming(message) {
+		try
+		{
+			console.log("receive message:%s", message);
+			datajson = JSON.parse(message);  
+			/*
+			*连接成功时接收客户端信息
+			*{"id":100001, "arg":{"userid":1154}}
+			*/
+			if(datajson.id == 100001)
+			{
+				//将userid ws加入map
+				var userid = datajson.arg.userid;
+				map_ws_userid.set(userid, ws);
+				console.log("add userid %d, map_ws_userid size %d", userid, map_ws_userid.size);
+			}
+			/*
+			*客户端请求登录弹窗消息
+			*{"id":100002, "arg":{"userid":1154}}
+			*/
+			else if(datajson.id == 100002)
+			{
+				var userid = datajson.arg.userid;
+				var login_massage = g_login_message;
+				if(login_massage != "")
+				{
+					notify_message(userid, login_massage);
+				}
+			}
+		}
+		catch(e)
+		{
+			console.log("Exception error:%s", e.message);
+		}
+	});
+	//客户端关闭调用
+	ws.on("close", function close() {
+		//将ws从map去掉
+		for (var item of map_ws_userid.entries()) {
+			if(item[1] == ws)
+			{
+				map_ws_userid.delete(item[0]);
+				console.log("delete userid %d, map_ws_userid size %d", item[0], map_ws_userid.size);
+			}
+		}
+	});
 });
