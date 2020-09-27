@@ -1,11 +1,81 @@
-//打印在线人数和在线用户userid
-	{"id":0, "arg":{}}
-//查询在线人数消息格式
-	{"id":1, "arg":{}}
-	//返回: 
-	{"ret":0, "users_online":120};
-//发送消息格式:
-	//userid为0时候,发消息给所有玩家,userid不为0时候,发送消息给该玩家
-	{"id":2, "arg":{"userid":234, "message":"nihao"}}
-	//返回:ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
-	{"ret":ret, "error_message":error_message};
+打印在线人数和在线用户userid，仅供WebSocket端使用
+[Request]:
+{
+	"id":100000, 
+	"arg":{}
+}
+	
+查询在线人数
+[Request]:
+{
+	"id":100001, 
+	"arg":{}
+}
+[Response]:
+{
+	"ret":0, 
+	"users_online":120
+}
+	
+向客户端发送弹框消息
+[Request]:
+{
+	"id":100002, 
+	"arg":{
+		"userid":234,	//userid为0时候，发消息给所有玩家，userid不为0时候,发送消息给该玩家
+		"message":"lottery"
+	}
+}
+[Response]:
+{
+	"ret":0,	//ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
+	"error_message":error_message
+}
+
+向客户端发送登录时候才弹出的消息，登录消息只保存一条
+[Request]:
+{
+	"id":100003, 
+	"arg":{
+		"type":1,	//type 1:登录消息 0:取消登录消息
+		"userid":234,	//userid为0时候，发消息给所有玩家，userid不为0时候,发送消息给该玩家
+		"message":"lottery"
+	}
+}
+[Response]:
+{
+	"ret":0,	//ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
+	"error_message":error_message
+}
+
+向客户端发送维护消息与取消维护消息
+[Request]:
+{
+	"id":100004, 
+	"arg":{
+		"type":1,	//type 1:维护消息 0:取消维护消息
+		"message":"lottery"
+	}
+}
+[Response]:
+{
+	"ret":0,	//ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
+	"error_message":error_message
+}
+
+向客户端发送登录消息与弹窗消息
+[Request]:
+{
+	"id":100005, 
+	"arg":{
+		"type":1,	//type 1:登录消息 0:取消登录消息
+		"userid":234,	//userid为0时候，发消息给所有玩家，userid不为0时候,发送消息给该玩家
+		"message":"lottery"
+	}
+}
+[Response]:
+{
+	"ret":0,	//ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
+	"error_message":error_message
+}
+
