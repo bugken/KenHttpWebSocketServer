@@ -25,6 +25,7 @@ new Promise(function(resolve, reject){
 		for(i = 0; i < sockets.length; i++)
 		{
 			userid = userid + 1;
+			socket = sockets.pop();
 			json = {"id":1, "arg":{"userid":userid}};
 			str = JSON.stringify(json);
 			if (socket.readyState == WebSocket.OPEN) {
