@@ -21,6 +21,22 @@ function dump_users_info()
 		console.log("userid:%d online.", item[0]);
 	}
 }
+//读取登录信息、维护信息内容
+function dump_message()
+{
+	console.log("maintenance message:%s", maintenance_message);
+	console.log("login message to all:%s", login_message_to_all);
+	for (var item of map_userid_login_message.entries()) {
+		console.log("message to userid:%d %s.", item[0], item[1]);
+	}
+}
+//清空登录信息，维护信息
+function clear_message()
+{
+	maintenance_message = "";
+	login_message_to_all = "";
+	map_userid_login_message.clear();
+}
 function dump_login_messages()
 {
 	console.log("login message size:%d", array_login_messages.length());
@@ -198,9 +214,23 @@ http_server.on("request", function (req, res) {
 		try
 		{
 			datajson = JSON.parse(data);  
-			if(datajson.id == 100000)//打印在线人数信息，包括在线人数数量和useid
+			if(datajson.id == 900001)//打印在线人数信息，包括在线人数数量和useid
 			{
 				dump_users_info();
+				retStr = {"ret":0, "error_message":""};
+				console.log("reply to web:%s", JSON.stringify(retStr));
+				res.end(JSON.stringify(retStr));
+			}
+			if(datajson.id == 900002)//读取登录信息、维护信息内容
+			{
+				dump_message();
+				retStr = {"ret":0, "error_message":""};
+				console.log("reply to web:%s", JSON.stringify(retStr));
+				res.end(JSON.stringify(retStr));
+			}
+			if(datajson.id == 900003)//读取登录信息、维护信息内容
+			{
+				clear_message();
 				retStr = {"ret":0, "error_message":""};
 				console.log("reply to web:%s", JSON.stringify(retStr));
 				res.end(JSON.stringify(retStr));
@@ -319,10 +349,7 @@ ws_server.on("connection", function connection(ws, req) {
 		{
 			console.log("ws receive message:%s", message);
 			datajson = JSON.parse(message);  
-			/*
-			*连接成功时接收客户端信息
-			*{"id":100001, "arg":{"userid":1154}}
-			*/
+			//客户端向服务端发送的第一条消息，告诉服务端用户的信息
 			if(datajson.id == 100001)
 			{
 				var userid = datajson.arg.userid;
@@ -341,10 +368,7 @@ ws_server.on("connection", function connection(ws, req) {
 					map_ws_userid.set(userid, ws);
 				}
 			}
-			/*
-			*客户端请求登录弹窗消息
-			*{"id":100002, "arg":{"userid":1154}}
-			*/
+			//向服务端请求弹窗信息
 			else if(datajson.id == 100002)
 			{
 				var userid = datajson.arg.userid;
@@ -361,7 +385,6 @@ ws_server.on("connection", function connection(ws, req) {
 				{
 					notify_message(userid, 1, map_userid_login_message.get(userid));
 				}
-				//userid=0的时候已经发送登录消息
 				if(login_message_to_all != "")
 				{
 					notify_message(userid, 1, login_message_to_all);
