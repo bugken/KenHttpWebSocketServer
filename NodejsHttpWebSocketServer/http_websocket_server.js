@@ -218,40 +218,28 @@ http_server.on("request", function (req, res) {
 			{
 				dump_users_info();
 				retStr = {"ret":0, "error_message":""};
-				console.log("reply to web:%s", JSON.stringify(retStr));
-				res.end(JSON.stringify(retStr));
 			}
 			if(datajson.id == 900002)//读取登录信息、维护信息内容
 			{
 				dump_message();
 				retStr = {"ret":0, "error_message":""};
-				console.log("reply to web:%s", JSON.stringify(retStr));
-				res.end(JSON.stringify(retStr));
 			}
 			if(datajson.id == 900003)//读取登录信息、维护信息内容
 			{
 				clear_message();
 				retStr = {"ret":0, "error_message":""};
-				console.log("reply to web:%s", JSON.stringify(retStr));
-				res.end(JSON.stringify(retStr));
 			}
 			else if(datajson.id == 100001)//在线人数
 			{
 				retStr = query_users_online();
-				console.log("reply to web:%s", JSON.stringify(retStr));
-				res.end(JSON.stringify(retStr));
 			}
 			else if(datajson.id == 100002)//发送弹窗消息
 			{
 				retStr = send_message(datajson.arg);
-				console.log("reply to web:%s", JSON.stringify(retStr));	
-				res.end(JSON.stringify(retStr));
 			}
 			else if(datajson.id == 100003)//保存登录消息
 			{
 				retStr = save_login_message(datajson.arg);
-				console.log("reply to web:%s", JSON.stringify(retStr));	
-				res.end(JSON.stringify(retStr));
 			}
 			else if(datajson.id == 100004)//维护消息
 			{
@@ -265,20 +253,13 @@ http_server.on("request", function (req, res) {
 					maintenance_message = "";
 				}
 				retStr = {"ret":0, "error_message":""};
-				console.log("reply to web:%s", JSON.stringify(retStr));
-				res.end(JSON.stringify(retStr));
 			}
 			else if(datajson.id == 100005)//登录与弹窗消息
 			{
 				retStr = handle_pop_login_message(datajson.arg);
-				console.log("reply to web:%s", JSON.stringify(retStr));	
-				res.end(JSON.stringify(retStr));
 			}
-			else
-			{
-				console.log("reply to web:%s", JSON.stringify(retStr));
-				res.end(JSON.stringify(retStr));
-			}
+			console.log("reply to web:%s", JSON.stringify(retStr));
+			res.end(JSON.stringify(retStr));
 		}
 		catch(e)
 		{
