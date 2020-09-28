@@ -5,6 +5,12 @@
 	"id":900001, 
 	"arg":{}
 }
+[Response]:
+{
+	"ret":0,
+	"error_message":""
+} 
+
 
 读取登录信息、维护信息内容
 [Request]:
@@ -12,6 +18,12 @@
 	"id":900002, 
 	"arg":{}
 }
+[Response]:
+{
+	"ret":0,
+	"error_message":""
+} 
+
 
 清空登录信息、维护信息内容
 [Request]:
@@ -19,6 +31,27 @@
 	"id":900003, 
 	"arg":{}
 }
+[Response]:
+{
+	"ret":0,
+	"error_message":""
+} 
+
+打印信息开关
+[Request]:
+{
+	"id":900004, 
+	"arg":{
+		"operation":1,	//operation 0:关闭http打印信息开关 1:打开http打印信息开关 
+		"op_http":1	//op_http 0:关闭http打印信息开关 1:打开http打印信息开关 
+	}
+}
+[Response]:
+{
+	"ret":0,
+	"error_message":""
+} 
+
 
 --------------------------------------------外部使用-------------------------------------------------
 查询在线人数
