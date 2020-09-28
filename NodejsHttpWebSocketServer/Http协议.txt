@@ -42,8 +42,8 @@
 {
 	"id":900004, 
 	"arg":{
-		"operation":1,	//operation 0:关闭http打印信息开关 1:打开http打印信息开关 
-		"op_http":1	//op_http 0:关闭http打印信息开关 1:打开http打印信息开关 
+		"log_more":1,	//log_more 0/1关闭/打开比较多的打印信息，如websocket与client的交互消息 
+		"log_less":1	//log_less 0/1关闭/打开比较少的打印信息，如httpserver与web交互信息、内部信息、弹框信息等
 	}
 }
 [Response]:

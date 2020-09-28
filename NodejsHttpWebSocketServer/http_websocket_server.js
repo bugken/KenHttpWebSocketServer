@@ -1,6 +1,7 @@
 const WebSocket = require("ws");
 const http = require("http");
 const util = require("util");
+const fs = require('fs');
 
 const g_websocket_server_port = 9001;
 const g_http_server_port = 9002;
@@ -11,44 +12,92 @@ var g_map_ws_userid = new Map();
 var g_map_userid_login_message = new Map();
 var g_login_message_to_all = "";
 var g_maintenance_message = "";
-var g_log_switch = 1;
-var g_log_switch_http = 1;//只针对http的请求与回复消息
+var g_switch_more_log = 1;
+var g_switch_less_log = 1;//针对http和弹框消息
+var g_log_file = "ws_http.log";
 
+//写日志
+function log_writer(log_message){
+	var date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+	fs.appendFileSync(g_log_file, "[".concat(date).concat("]").concat(log_message).concat("\n"),{flag:'a'});
+}
 //打印在线人数信息，包括在线人数数量和useid
 function dump_users_info(){
-	console.log("g_ws_server.clients.size:%d", g_ws_server.clients.size);
-	console.log("g_map_ws_userid size:%d", g_map_ws_userid.size);
+	var clients_size = util.format("dump_users_info g_ws_server.clients.size:%d", g_ws_server.clients.size);
+	if(g_switch_less_log == 1)
+		console.log(clients_size);
+	log_writer(clients_size);
+
+	var map_size = util.format("dump_users_info g_map_ws_userid size:%d", g_map_ws_userid.size);
+	if(g_switch_less_log == 1)
+		console.log(map_size);
+	log_writer(map_size);
+
 	for (var item of g_map_ws_userid.entries()) {
-		console.log("userid:%d online.", item[0]);
+		var user_info = util.format("dump_users_info userid:%d online.", item[0]);
+		if(g_switch_less_log == 1)
+			console.log(user_info);
+		log_writer(user_info);
 	}
+
+	json = {"ret":0, "error_message":""};
+	return json;
 }
 //读取登录信息、维护信息内容
 function dump_message(){
-	console.log("maintenance message:%s", g_maintenance_message);
-	console.log("login message to all:%s", g_login_message_to_all);
+	var msg = util.format("dump_message g_map_ws_userid size:%d", g_map_ws_userid.size);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+	log_writer(msg);
+
+	msg = util.format("dump_message login message to all:%s", g_login_message_to_all);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+	log_writer(msg);
+
 	for (var item of g_map_userid_login_message.entries()) {
-		console.log("message to userid:%d %s.", item[0], item[1]);
+		msg = util.format("dump_message message to userid:%d %s.", item[0], item[1]);
+		if(g_switch_less_log == 1)
+			console.log(msg);
+		log_writer(msg);
 	}
+
+	json = {"ret":0, "error_message":""};
+	return json;
 }
 //清空登录信息，维护信息
 function clear_message(){
+	var msg = util.format("clear_message");
+	log_writer(msg);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+
 	g_maintenance_message = "";
 	g_login_message_to_all = "";
 	g_map_userid_login_message.clear();
+
+	json = {"ret":0, "error_message":""};
+	return json;
 }
 //打印信息开关
 function log_switch(json_data){
+	var msg = util.format("log_switch log_more:%d log_less:%d", json_data.log_more, json_data.log_less);
+	log_writer(msg);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+
 	var ret = 0;
 	var error_message = "";
-	if(json_data.operation == 0)//关闭log
-		g_log_switch = 0;
-	else if(json_data.operation == 1)
-		g_log_switch = 1;
-	if(json_data.op_http == 0)//http收发消息开关
-		g_log_switch_http = 0;
-	else if(json_data.op_http == 1)
-		g_log_switch_http = 1;
-	var json = {"ret":ret, "error_message":error_message};
+	if(json_data.log_more == 0)//关闭log
+		g_switch_more_log = 0;
+	else if(json_data.log_more == 1)
+		g_switch_more_log = 1;
+	if(json_data.log_less == 0)//http收发消息开关
+		g_switch_less_log = 0;
+	else if(json_data.log_less == 1)
+		g_switch_less_log = 1;
+
+	json = {"ret":0, "error_message":""};
 	return json;
 }
 //在线人数查询
@@ -63,27 +112,36 @@ function broadcast_message(type, message){
 	for (var item of g_map_ws_userid.entries()) {
 		json = {"id":200001, "arg":{"type":type, "message": message}};  //200001:客户端弹窗消息
 		str = JSON.stringify(json);
-		if (g_log_switch == 1)
-			console.log("send to: %d msg: %s", item[0], str);
-
 		item[1].send(str);
+
+		var msg = util.format("broadcast_message userid:%d type:%d message:%s.",item[0], type, message);
+		log_writer(msg);
+		if (g_switch_less_log == 1)
+			console.log(msg);
 	}
 }
 //发送消息给特定玩家 type 1:弹窗消息 2:维护消息
 function notify_message(userid, type, message){
+	var msg = util.format("notify_message userid:%d type:%d message:%s.",userid, type, message);
+	log_writer(msg);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+
 	var ret = 0;
 	if(g_map_ws_userid.has(userid)){
 		var ws = g_map_ws_userid.get(userid);
 		json = {"id":200001, "arg":{"type":type, "message":message}};  
 		str = JSON.stringify(json);
-		if (g_log_switch == 1)
+		if (g_switch_less_log == 1)
 			console.log("send to: %d msg: %s", userid, str);
 
 		ws.send(str);
 	}
 	else{
-		if (g_log_switch == 1)
-			console.log("userid %d 不在线", userid);
+		msg = util.format("notify_message userid:%d 不在线", userid);
+		log_writer(msg);
+		if (g_switch_less_log == 1)
+			console.log(msg);
 		ret = -1;
 	}
 	return ret;
@@ -109,6 +167,11 @@ function send_message(json_data){
 }
 //保存或清除登录信息
 function save_login_message(json_data){
+	var msg = util.format("save_login_message type:%d userid:%d message:%s.", json_data.type, json_data.userid, json_data.message);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+	log_writer(msg);
+
 	var ret = 0;
 	var error_message = "";
 	if(json_data.userid > 0){		
@@ -132,6 +195,11 @@ function save_login_message(json_data){
 }
 //处理登录与弹框消息
 function handle_pop_login_message(json_data){
+	var msg = util.format("handle_pop_login_message type:%d userid:%d message:%s.", json_data.type, json_data.userid, json_data.message);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+	log_writer(msg);
+
 	var ret = 0;
 	var error_message = "";
 	if(json_data.userid > 0){
@@ -167,7 +235,9 @@ g_http_server.listen(g_http_server_port, "0.0.0.0");
 g_http_server.setTimeout(5 * 60 * 1000);
 //服务器监听时触发
 g_http_server.on("listening", function () {
-	console.log('http server start listenning on port %d.', g_http_server_port);
+	var log_message = util.format("http server start listenning on port %d.", g_http_server_port);
+	console.log(log_message);
+	log_writer(log_message);
 });
 //接收到客户端请求时触发
 g_http_server.on("request", function (req, res) {
@@ -178,27 +248,22 @@ g_http_server.on("request", function (req, res) {
 	req.on("data",function(chunk){  
 		data += chunk;  
 	}); 
-	req.on("end",function(){  
-		if (g_log_switch_http == 1)
-			console.log("http received data from web:%s", data);
+	req.on("end",function(){
+		var log_message = util.format("http received data from web:%s", data);  
+		write_log(log_message);
+		if (g_switch_less_log == 1)
+			console.log(log_message);
+
 		try{
 			datajson = JSON.parse(data);  
-			if(datajson.id == 900001){//打印在线人数信息，包括在线人数数量和useid
-				dump_users_info();
-				retStr = {"ret":0, "error_message":""};
-			}
-			if(datajson.id == 900002){//读取登录信息、维护信息内容
-				dump_message();
-				retStr = {"ret":0, "error_message":""};
-			}
-			if(datajson.id == 900003){//读取登录信息、维护信息内容
-				clear_message();
-				retStr = {"ret":0, "error_message":""};
-			}
-			if(datajson.id == 900004){//日志开关
-				log_switch(datajson.arg);
-				retStr = {"ret":0, "error_message":""};
-			}
+			if(datajson.id == 900001)//打印在线人数信息，包括在线人数数量和useid
+				retStr = dump_users_info();
+			else if(datajson.id == 900002)//读取登录信息、维护信息内容
+				retStr = dump_message();
+			else if(datajson.id == 900003)//读取登录信息、维护信息内容
+				retStr = clear_message();
+			else if(datajson.id == 900004)//日志开关
+				retStr = log_switch(datajson.arg);
 			else if(datajson.id == 100001)//在线人数
 				retStr = query_users_online();
 			else if(datajson.id == 100002)//发送弹窗消息
@@ -217,13 +282,19 @@ g_http_server.on("request", function (req, res) {
 			}
 			else if(datajson.id == 100005)//登录与弹窗消息
 				retStr = handle_pop_login_message(datajson.arg);
-			if (g_log_switch_http == 1)
-				console.log("reply to web:%s", JSON.stringify(retStr));
+			
 			res.end(JSON.stringify(retStr));
+			var log_message = util.format("reply to web:%s", JSON.stringify(retStr));
+			log_writer(log_message);
+			if (g_switch_less_log == 1)
+				console.log(log_message);
 		}
 		catch(e){
-			console.log("Exception error:%s", e.message);
 			res.end(JSON.stringify(retStr));
+
+			var log_message = util.format("Exception error:%s", e.message);
+			console.log(log_message);
+			log_writer(log_message);
 		}
 	});   
 });
@@ -265,21 +336,23 @@ function ws_notify_message(ws){
 	if(message != ""){
 		json = {"id":200001, "arg":{"type":type, "message":message}};
 		str = JSON.stringify(json);
-		if (g_log_switch == 1)
+		if (g_switch_more_log == 1)
 			console.log("send to: %d msg: %s", 0, str);
 		ws.send(str);
 	}
 }
 //服务器监听时触发
 g_ws_server.on("listening", function listen(){
-	console.log("websocket server start listenning on port %d.", g_websocket_server_port);
+	var log_message = util.format("websocket server start listenning on port %d.", g_websocket_server_port);
+	console.log(log_message);
+	log_writer(log_message);
 });
 //接收到客户端请求时触发
 g_ws_server.on("connection", function connection(ws, req) {
 	//接收到消息
 	ws.on('message', function incoming(message) {
 		try{
-			if (g_log_switch == 1)
+			if (g_switch_more_log == 1)
 				console.log("ws receive message:%s", message);
 			datajson = JSON.parse(message);  
 			//客户端向服务端发送的第一条消息，告诉服务端用户的信息
@@ -310,7 +383,9 @@ g_ws_server.on("connection", function connection(ws, req) {
 			}
 		}
 		catch(e){
-			console.log("Exception error:%s", e.message);
+			var log_message = util.format("Exception error:%s", e.message);
+			console.log(log_message);
+			log_writer(log_message);
 		}
 	});
 	//客户端关闭调用
@@ -319,7 +394,7 @@ g_ws_server.on("connection", function connection(ws, req) {
 		for (var item of g_map_ws_userid.entries()) {
 			if(item[1] == ws){
 				g_map_ws_userid.delete(item[0]);
-				if (g_log_switch == 1)
+				if (g_switch_more_log == 1)
 					console.log("delete userid %d, g_map_ws_userid size %d", item[0], g_map_ws_userid.size);
 			}
 		}
