@@ -29,7 +29,8 @@ function dump_login_messages()
 //在线人数查询
 function query_users_online()
 {
-	var counts = ws_server.clients.size;
+	//var counts = ws_server.clients.size;
+	var counts = map_ws_userid.size;
 	var json = {"ret":0, "users_online":counts};
 	return json;
 }
