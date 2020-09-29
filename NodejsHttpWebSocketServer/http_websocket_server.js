@@ -396,6 +396,7 @@ g_ws_server.on("connection", function connection(ws, req) {
 				g_map_ws_userid.delete(item[0]);
 				if (g_switch_more_log == 1)
 					console.log("delete userid %d, g_map_ws_userid size %d", item[0], g_map_ws_userid.size);
+				break;
 			}
 		}
 	});
