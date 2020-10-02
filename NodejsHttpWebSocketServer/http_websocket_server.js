@@ -2,13 +2,14 @@ const WebSocket = require("ws");
 const http = require("http");
 const util = require("util");
 const fs = require('fs');
-var moment = require('moment');
+const moment = require('moment');
+const g_messages = require('./messages.json');
 
 const g_websocket_server_port = 9001;
 const g_http_server_port = 9002;
-
 const g_ws_server = new WebSocket.Server({ port: g_websocket_server_port });
 const g_http_server = http.createServer();
+
 var g_map_ws_userid = new Map();
 var g_map_userid_login_message = new Map();
 var g_login_message_to_all = "";
@@ -16,6 +17,24 @@ var g_maintenance_message = "";
 var g_switch_more_log = 0;
 var g_switch_less_log = 1;//针对http和弹框消息
 var g_log_file = "ws_http.log";
+var g_message_file = "messages.json";
+
+//登录消息，维护消息初始化与持久化
+g_maintenance_message = g_messages["maintenance_message"];
+g_login_message_to_all = g_messages["login_message"];
+var msg = util.format("read maintenance message:%s.", g_maintenance_message);
+console.log(msg);
+log_writer(msg);
+msg = util.format("read login message:%s.", g_login_message_to_all);
+console.log(msg);
+log_writer(msg);
+//保存消息到文件
+function save_msg_to_file(){
+	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all};
+	var jsonstr = JSON.stringify(json_src);
+
+	fs.appendFileSync(g_message_file, jsonstr, {flag:'w'});
+}
 
 //写日志
 function log_writer(log_message){
@@ -44,7 +63,7 @@ function dump_users_info(){
 }
 //读取登录信息、维护信息内容
 function dump_message(){
-	var msg = util.format("dump_message g_map_ws_userid size:%d", g_map_ws_userid.size);
+	var msg = util.format("dump_message g_maintenance_message:%s", g_maintenance_message);
 	console.log(msg);
 	log_writer(msg);
 
@@ -71,11 +90,12 @@ function clear_message(){
 	g_maintenance_message = "";
 	g_login_message_to_all = "";
 	g_map_userid_login_message.clear();
+	save_msg_to_file();//更新文件
 
 	json = {"ret":0, "error_message":""};
 	return json;
 }
-//清空单个用户登录信息
+//清空单个用户登录信息，单个用户登录信息不写文件
 function clear_userid_login_msg(json_data){
 	var msg = util.format("clear_userid_login_msg userid:%d", json_data.userid);
 	log_writer(msg);
@@ -180,8 +200,8 @@ function send_message(json_data){
 	return json;
 }
 //保存或清除登录信息
-function save_login_message(json_data){
-	var msg = util.format("save_login_message type:%d userid:%d message:%s.", json_data.type, json_data.userid, json_data.message);
+function update_login_message(json_data){
+	var msg = util.format("update_login_message type:%d userid:%d message:%s.", json_data.type, json_data.userid, json_data.message);
 	if(g_switch_less_log == 1)
 		console.log(msg);
 	log_writer(msg);
@@ -204,6 +224,8 @@ function save_login_message(json_data){
 		ret = -1;
 		error_message = util.format("userid %d 不正确", json_data.userid);
 	}
+	save_msg_to_file();//持久化
+
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
@@ -239,6 +261,8 @@ function handle_pop_login_message(json_data){
 		ret = -1;
 		error_message = util.format("userid %d 不正确", json_data.userid);
 	}
+	save_msg_to_file();//持久化
+
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
@@ -285,7 +309,7 @@ g_http_server.on("request", function (req, res) {
 			else if(datajson.id == 100002)//发送弹窗消息
 				retStr = send_message(datajson.arg);
 			else if(datajson.id == 100003)//保存登录消息
-				retStr = save_login_message(datajson.arg);
+				retStr = update_login_message(datajson.arg);
 			else if(datajson.id == 100004){//维护消息
 				if(datajson.arg.type == 1){
 					g_maintenance_message = datajson.arg.message;
@@ -294,6 +318,7 @@ g_http_server.on("request", function (req, res) {
 				else if(datajson.arg.type == 0){
 					g_maintenance_message = "";
 				}
+				save_msg_to_file();
 				retStr = {"ret":0, "error_message":""};
 			}
 			else if(datajson.id == 100005)//登录与弹窗消息
