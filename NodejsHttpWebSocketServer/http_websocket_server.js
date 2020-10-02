@@ -12,7 +12,7 @@ var g_map_ws_userid = new Map();
 var g_map_userid_login_message = new Map();
 var g_login_message_to_all = "";
 var g_maintenance_message = "";
-var g_switch_more_log = 1;
+var g_switch_more_log = 0;
 var g_switch_less_log = 1;//针对http和弹框消息
 var g_log_file = "ws_http.log";
 
@@ -24,19 +24,16 @@ function log_writer(log_message){
 //打印在线人数信息，包括在线人数数量和useid
 function dump_users_info(){
 	var clients_size = util.format("dump_users_info g_ws_server.clients.size:%d", g_ws_server.clients.size);
-	if(g_switch_less_log == 1)
-		console.log(clients_size);
+	console.log(clients_size);
 	log_writer(clients_size);
 
 	var map_size = util.format("dump_users_info g_map_ws_userid size:%d", g_map_ws_userid.size);
-	if(g_switch_less_log == 1)
-		console.log(map_size);
+	console.log(map_size);
 	log_writer(map_size);
 
 	for (var item of g_map_ws_userid.entries()) {
 		var user_info = util.format("dump_users_info userid:%d online.", item[0]);
-		if(g_switch_less_log == 1)
-			console.log(user_info);
+		console.log(user_info);
 		log_writer(user_info);
 	}
 
@@ -46,19 +43,16 @@ function dump_users_info(){
 //读取登录信息、维护信息内容
 function dump_message(){
 	var msg = util.format("dump_message g_map_ws_userid size:%d", g_map_ws_userid.size);
-	if(g_switch_less_log == 1)
-		console.log(msg);
+	console.log(msg);
 	log_writer(msg);
 
 	msg = util.format("dump_message login message to all:%s", g_login_message_to_all);
-	if(g_switch_less_log == 1)
-		console.log(msg);
+	console.log(msg);
 	log_writer(msg);
 
 	for (var item of g_map_userid_login_message.entries()) {
 		msg = util.format("dump_message message to userid:%d %s.", item[0], item[1]);
-		if(g_switch_less_log == 1)
-			console.log(msg);
+		console.log(msg);
 		log_writer(msg);
 	}
 
