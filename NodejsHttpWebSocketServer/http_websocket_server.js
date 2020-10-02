@@ -4,7 +4,7 @@ const util = require("util");
 const fs = require('fs');
 const moment = require('moment');
 const g_messages = require('./messages.json');
-const g_interval = setInterval(fixup_users_online, 1000);
+const g_interval = setInterval(fixup_users_online, 10*60*1000);
 
 const g_websocket_server_port = 9001;
 const g_http_server_port = 9002;
@@ -15,7 +15,7 @@ var g_map_ws_userid = new Map();
 var g_map_userid_login_message = new Map();
 var g_login_message_to_all = "";
 var g_maintenance_message = "";
-var g_switch_more_log = 0;
+var g_switch_more_log = 1;
 var g_switch_less_log = 1;//针对http和弹框消息	
 var g_log_file = "ws_http.log";
 var g_message_file = "messages.json";
@@ -28,7 +28,7 @@ function fixup_users_online(){
 			item[1].close();
 			var user_info = util.format("fixup_users_online userid:%d close.", item[0]);
 			log_writer(user_info);
-			if(g_switch_less_log == 1)
+			if(g_switch_more_log == 1)
 				console.log(user_info);
 		}
 	}
@@ -168,7 +168,7 @@ function broadcast_message(type, message){
 		str = JSON.stringify(json);
 		item[1].send(str);
 
-		var msg = util.format("broadcast_message userid:%d(%s) type:%d message:%s.",item[0], item[0]._socket.remoteAddress, type, message);
+		var msg = util.format("broadcast_message userid:%d(%s) type:%d message:%s.",item[0], item[1]._socket.remoteAddress, type, message);
 		log_writer(msg);
 		if (g_switch_less_log == 1)
 			console.log(msg);
@@ -176,27 +176,23 @@ function broadcast_message(type, message){
 }
 //发送消息给特定玩家 type 1:弹窗消息 2:维护消息
 function notify_message(userid, type, message){
-	var msg = util.format("notify_message userid:%d(%s) type:%d message:%s.",userid, ws._socket.remoteAddress, type, message);
-	log_writer(msg);
-	if(g_switch_less_log == 1)
-		console.log(msg);
-
 	var ret = 0;
+	var msg = "";
 	if(g_map_ws_userid.has(userid)){
 		var ws = g_map_ws_userid.get(userid);
 		json = {"id":200001, "arg":{"type":type, "message":message}};  
 		str = JSON.stringify(json);
-		if (g_switch_less_log == 1)
-			console.log("send to: %d(%s) msg: %s", userid, ws._socket.remoteAddress, str);
 		ws.send(str);
+		msg = util.format("notify_message send to: %d(%s) msg: %s", userid, ws._socket.remoteAddress, str);
 	}
 	else{
-		msg = util.format("notify_message userid:%d 不在线", userid);
-		log_writer(msg);
-		if (g_switch_less_log == 1)
-			console.log(msg);
 		ret = -1;
+		msg = util.format("notify_message userid:%d 不在线", userid);
 	}
+	log_writer(msg);
+	if (g_switch_less_log == 1)
+		console.log(msg);
+
 	return ret;
 }
 //发送数据
@@ -260,10 +256,8 @@ function handle_pop_login_message(json_data){
 		if(json_data.type == 0)
 			g_map_userid_login_message.delete(json_data.userid);
 		else{
-			//保存到特定玩家的登录消息
-			g_map_userid_login_message.set(json_data.userid, json_data.message);
-			//弹框提示
-			notify_message(json_data.userid, 1, json_data.message);
+			g_map_userid_login_message.set(json_data.userid, json_data.message);//保存到特定玩家的登录消息
+			notify_message(json_data.userid, 1, json_data.message);//弹框提示
 		}
 	}
 	else if(json_data.userid == 0){
@@ -271,8 +265,7 @@ function handle_pop_login_message(json_data){
 			g_login_message_to_all = "";
 		else{
 			g_login_message_to_all = json_data.message;
-			//弹窗提示
-			broadcast_message(1, json_data.message);
+			broadcast_message(1, json_data.message);//弹窗提示
 		}
 	}
 	else{
@@ -281,6 +274,17 @@ function handle_pop_login_message(json_data){
 	}
 	save_msg_to_file();//持久化
 
+	var json = {"ret":ret, "error_message":error_message};
+	return json;
+}
+//踢玩家下线
+function kickoff_user(json_data){
+	var error_message = "";
+	var ret = 0;
+	ret = notify_message(json_data.userid, 3, json_data.message);
+	if(ret == -1){
+		error_message = util.format("userid:%d 不在线", json_data.userid);
+	}
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
@@ -297,11 +301,10 @@ g_http_server.on("listening", function () {
 });
 //接收到客户端请求时触发
 g_http_server.on("request", function (req, res) {
-	//获取http请求传入的数据(json数据)
 	var data = "";  
 	var datajson = "";
 	var retStr = {"ret":-1, "error_message":"json error or json id not exist!"};
-	req.on("data",function(chunk){  
+	req.on("data",function(chunk){//获取http请求传入的数据(json数据)
 		data += chunk;  
 	}); 
 	req.on("end",function(){
@@ -344,6 +347,8 @@ g_http_server.on("request", function (req, res) {
 			}
 			else if(datajson.id == 100005)//登录与弹窗消息
 				retStr = handle_pop_login_message(datajson.arg);
+			else if(datajson.id == 100006)//踢用户下线
+				retStr = kickoff_user(datajson.arg);
 
 			res.end(JSON.stringify(retStr));
 			var log_message = util.format("reply to web(%s):%s", req.connection.remoteAddress, JSON.stringify(retStr));

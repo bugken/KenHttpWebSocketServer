@@ -11,7 +11,6 @@
 	"error_message":""
 } 
 
-
 读取登录信息、维护信息内容
 [Request]:
 {
@@ -23,7 +22,6 @@
 	"ret":0,
 	"error_message":""
 } 
-
 
 清空登录信息、维护信息内容
 [Request]:
@@ -147,6 +145,21 @@
 		"type":1,	//type 1:登录消息 0:取消登录消息
 		"userid":234,	//userid为0时候，发消息给所有玩家，userid不为0时候,发送消息给该玩家
 		"message":"lottery"
+	}
+}
+[Response]:
+{
+	"ret":0,	//ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
+	"error_message":error_message
+}
+
+踢用户下线消息
+[Request]:
+{
+	"id":100006, 
+	"arg":{
+		"userid":234,	
+		"message":"你被强制下线"
 	}
 }
 [Response]:
