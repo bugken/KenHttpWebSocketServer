@@ -61,7 +61,7 @@ function dump_message(){
 	json = {"ret":0, "error_message":""};
 	return json;
 }
-//清空登录信息，维护信息
+//清空所有登录信息，维护信息
 function clear_message(){
 	var msg = util.format("clear_message");
 	log_writer(msg);
@@ -73,6 +73,24 @@ function clear_message(){
 	g_map_userid_login_message.clear();
 
 	json = {"ret":0, "error_message":""};
+	return json;
+}
+//清空单个用户登录信息
+function clear_userid_login_msg(json_data){
+	var msg = util.format("clear_userid_login_msg userid:%d", json_data.userid);
+	log_writer(msg);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+
+	var error_message = "";
+	if(g_map_userid_login_message.has(json_data.userid)){
+		g_map_userid_login_message.delete(json_data.userid);
+	}else{
+		error_message = util.format("there is no login message for userid:%d", json_data.userid);
+		log_writer(error_message);
+	}
+
+	json = {"ret":0, "error_message":error_message};
 	return json;
 }
 //打印信息开关
@@ -256,10 +274,12 @@ g_http_server.on("request", function (req, res) {
 				retStr = dump_users_info();
 			else if(datajson.id == 900002)//读取登录信息、维护信息内容
 				retStr = dump_message();
-			else if(datajson.id == 900003)//读取登录信息、维护信息内容
+			else if(datajson.id == 900003)//清除登录信息、维护信息
 				retStr = clear_message();
 			else if(datajson.id == 900004)//日志开关
 				retStr = log_switch(datajson.arg);
+			else if(datajson.id == 900005)//日志开关
+				retStr = clear_userid_login_msg(datajson.arg);
 			else if(datajson.id == 100001)//在线人数
 				retStr = query_users_online();
 			else if(datajson.id == 100002)//发送弹窗消息
