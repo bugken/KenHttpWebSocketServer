@@ -22,10 +22,17 @@ var g_message_file = "messages.json";
 
 //定时清理函数
 function fixup_users_online(){
-	var msg = util.format("fixup_users_online fixup users size:%d", g_map_ws_userid.size;
-	if(g_map_ws_userid.size > 0)
-		g_map_ws_userid.clear();//让玩家断开重新连接
-
+	var size =  g_map_ws_userid.size;
+	if(g_map_ws_userid.size > 0){
+		for (var item of g_map_ws_userid.entries()) {
+			item[1].close();
+			var user_info = util.format("fixup_users_online userid:%d close.", item[0]);
+			log_writer(user_info);
+			if(g_switch_less_log == 1)
+				console.log(user_info);
+		}
+	}
+	var msg = util.format("fixup_users_online fixup users size:%d", size);
 	log_writer(msg);
 	if(g_switch_less_log == 1)
 		console.log(msg);
@@ -43,12 +50,10 @@ log_writer(msg);
 function save_msg_to_file(){
 	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all};
 	var jsonstr = JSON.stringify(json_src);
-
 	fs.appendFileSync(g_message_file, jsonstr, {flag:'w'});
 }
 //写日志
 function log_writer(log_message){
-	//var date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 	var date = moment().format("YYYY-MM-DD HH:mm:ss");
 	fs.appendFileSync(g_log_file, "[".concat(date).concat("]").concat(log_message).concat("\n"),{flag:'a'});
 }
@@ -57,7 +62,6 @@ function dump_users_info(){
 	var clients_size = util.format("dump_users_info g_ws_server.clients.size:%d", g_ws_server.clients.size);
 	console.log(clients_size);
 	log_writer(clients_size);
-
 	var map_size = util.format("dump_users_info g_map_ws_userid size:%d", g_map_ws_userid.size);
 	console.log(map_size);
 	log_writer(map_size);
@@ -67,7 +71,6 @@ function dump_users_info(){
 		console.log(user_info);
 		log_writer(user_info);
 	}
-
 	json = {"ret":0, "error_message":""};
 	return json;
 }
@@ -76,7 +79,6 @@ function dump_message(){
 	var msg = util.format("dump_message g_maintenance_message:%s", g_maintenance_message);
 	console.log(msg);
 	log_writer(msg);
-
 	msg = util.format("dump_message login message to all:%s", g_login_message_to_all);
 	console.log(msg);
 	log_writer(msg);
@@ -86,7 +88,6 @@ function dump_message(){
 		console.log(msg);
 		log_writer(msg);
 	}
-
 	json = {"ret":0, "error_message":""};
 	return json;
 }
@@ -101,7 +102,6 @@ function clear_message(){
 	g_login_message_to_all = "";
 	g_map_userid_login_message.clear();
 	save_msg_to_file();//更新文件
-
 	json = {"ret":0, "error_message":""};
 	return json;
 }
@@ -119,7 +119,6 @@ function clear_userid_login_msg(json_data){
 		error_message = util.format("there is no login message for userid:%d", json_data.userid);
 		log_writer(error_message);
 	}
-
 	json = {"ret":0, "error_message":error_message};
 	return json;
 }
@@ -130,8 +129,6 @@ function log_switch(json_data){
 	if(g_switch_less_log == 1)
 		console.log(msg);
 
-	var ret = 0;
-	var error_message = "";
 	if(json_data.log_more == 0)//关闭log
 		g_switch_more_log = 0;
 	else if(json_data.log_more == 1)
@@ -140,7 +137,6 @@ function log_switch(json_data){
 		g_switch_less_log = 0;
 	else if(json_data.log_less == 1)
 		g_switch_less_log = 1;
-
 	json = {"ret":0, "error_message":""};
 	return json;
 }
@@ -162,7 +158,6 @@ function query_user_is_online(json_data){
 	log_writer(msg);
 	if (g_switch_less_log == 1)
 		console.log(msg);
-
 	var json = {"ret":0, "return_message":status};
 	return json;
 }
@@ -193,7 +188,6 @@ function notify_message(userid, type, message){
 		str = JSON.stringify(json);
 		if (g_switch_less_log == 1)
 			console.log("send to: %d(%s) msg: %s", userid, ws._socket.remoteAddress, str);
-
 		ws.send(str);
 	}
 	else{
@@ -250,7 +244,6 @@ function update_login_message(json_data){
 		error_message = util.format("userid %d 不正确", json_data.userid);
 	}
 	save_msg_to_file();//持久化
-
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
@@ -401,7 +394,6 @@ function ws_notify_message(ws){
 		type = 2;
 		message = g_maintenance_message;
 	}
-
 	if(message != ""){
 		json = {"id":200001, "arg":{"type":type, "message":message}};
 		str = JSON.stringify(json);
@@ -463,6 +455,7 @@ g_ws_server.on("connection", function connection(ws, req) {
 		for (var item of g_map_ws_userid.entries()) {
 			if(item[1] == ws){
 				g_map_ws_userid.delete(item[0]);
+				item[1].close();//关闭socket
 				if (g_switch_more_log == 1)
 					console.log("delete userid %d(%s), g_map_ws_userid size %d", item[0], item[1]._socket.remoteAddress, g_map_ws_userid.size);
 				break;

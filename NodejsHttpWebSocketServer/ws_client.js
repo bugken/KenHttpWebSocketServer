@@ -6,7 +6,7 @@ var sockets = new Array()
 new Promise(function(resolve, reject){
     for(i = 0; i < 1; i++)
 	{
-		socket = new WebSocket("ws://47.57.6.150:12013/ws");
+		socket = new WebSocket("ws://127.0.0.1:9001/ws");
 		sockets.push(socket);
 		socket.onmessage = function (event) {
 			console.log("websocket client onmessage:%s.", event.data);
@@ -26,7 +26,7 @@ new Promise(function(resolve, reject){
 		{
 			userid = userid + 1;
 			socket = sockets.pop();
-			json = {"id":1, "arg":{"userid":userid}};
+			json = {"id":100001, "arg":{"userid":userid}};
 			str = JSON.stringify(json);
 			if (socket.readyState == WebSocket.OPEN) {
 				console.log("send data:%s", str);
