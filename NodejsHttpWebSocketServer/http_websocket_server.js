@@ -11,7 +11,7 @@ const g_http_server_port = 9002;
 const g_ws_server = new WebSocket.Server({ port: g_websocket_server_port });
 const g_http_server = http.createServer();
 
-var g_map_ws_userid = new Map();
+var g_map_ws_container = new Map();
 var g_map_userid_login_message = new Map();
 var g_login_message_to_all = "";
 var g_maintenance_message = "";
@@ -22,9 +22,9 @@ var g_message_file = "messages.json";
 
 //定时清理函数
 function fixup_users_online(){
-	var size =  g_map_ws_userid.size;
-	if(g_map_ws_userid.size > 0){
-		for (var item of g_map_ws_userid.entries()) {
+	var size =  g_map_ws_container.size;
+	if(g_map_ws_container.size > 0){
+		for (var item of g_map_ws_container.entries()) {
 			item[1].close();
 			var user_info = util.format("fixup_users_online userid:%d close.", item[0]);
 			log_writer(user_info);
@@ -62,11 +62,11 @@ function dump_users_info(){
 	var clients_size = util.format("dump_users_info g_ws_server.clients.size:%d", g_ws_server.clients.size);
 	console.log(clients_size);
 	log_writer(clients_size);
-	var map_size = util.format("dump_users_info g_map_ws_userid size:%d", g_map_ws_userid.size);
+	var map_size = util.format("dump_users_info g_map_ws_container size:%d", g_map_ws_container.size);
 	console.log(map_size);
 	log_writer(map_size);
 
-	for (var item of g_map_ws_userid.entries()) {
+	for (var item of g_map_ws_container.entries()) {
 		var user_info = util.format("dump_users_info userid:%d online.", item[0]);
 		console.log(user_info);
 		log_writer(user_info);
@@ -143,7 +143,7 @@ function log_switch(json_data){
 //在线人数查询
 function query_users_online(){
 	//var counts = g_ws_server.clients.size;
-	var counts = g_map_ws_userid.size;
+	var counts = g_map_ws_container.size;
 	var json = {"ret":0, "users_online":counts};
 	return json;
 }
@@ -151,7 +151,7 @@ function query_users_online(){
 function query_user_is_online(json_data){
 	var status = "offline"
 	if(json_data.userid > 0){		
-		if(g_map_ws_userid.has(json_data.userid))
+		if(g_map_ws_container.has(json_data.userid))
 			status = "online";
 	}
 	var msg = util.format("user:%d now is %s", json_data.userid, status);
@@ -163,7 +163,7 @@ function query_user_is_online(json_data){
 }
 //广播数据给用户 type 1:弹窗消息 2:维护消息
 function broadcast_message(type, message){
-	for (var item of g_map_ws_userid.entries()) {
+	for (var item of g_map_ws_container.entries()) {
 		json = {"id":200001, "arg":{"type":type, "message": message}};  //200001:客户端弹窗消息
 		str = JSON.stringify(json);
 		item[1].send(str);
@@ -178,8 +178,8 @@ function broadcast_message(type, message){
 function notify_message(userid, type, message){
 	var ret = 0;
 	var msg = "";
-	if(g_map_ws_userid.has(userid)){
-		var ws = g_map_ws_userid.get(userid);
+	if(g_map_ws_container.has(userid)){
+		var ws = g_map_ws_container.get(userid);
 		json = {"id":200001, "arg":{"type":type, "message":message}};  
 		str = JSON.stringify(json);
 		ws.send(str);
@@ -431,7 +431,7 @@ g_ws_server.on("connection", function connection(ws, req) {
 				if(userid == 0)
 					ws_notify_message(ws);
 				else//将userid ws加入map
-					g_map_ws_userid.set(userid, ws);
+					g_map_ws_container.set(userid, ws);
 			}
 			//向服务端请求弹窗信息
 			else if(datajson.id == 100002){
@@ -457,12 +457,12 @@ g_ws_server.on("connection", function connection(ws, req) {
 	//客户端关闭调用
 	ws.on("close", function close() {
 		//将ws从map去掉
-		for (var item of g_map_ws_userid.entries()) {
+		for (var item of g_map_ws_container.entries()) {
 			if(item[1] == ws){
-				g_map_ws_userid.delete(item[0]);
+				g_map_ws_container.delete(item[0]);
 				item[1].close();//关闭socket
 				if (g_switch_more_log == 1)
-					console.log("delete userid %d(%s), g_map_ws_userid size %d", item[0], item[1]._socket.remoteAddress, g_map_ws_userid.size);
+					console.log("delete userid %d(%s), g_map_ws_container size %d", item[0], item[1]._socket.remoteAddress, g_map_ws_container.size);
 				break;
 			}
 		}
