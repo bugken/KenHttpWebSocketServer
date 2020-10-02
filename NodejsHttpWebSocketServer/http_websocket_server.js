@@ -4,6 +4,7 @@ const util = require("util");
 const fs = require('fs');
 const moment = require('moment');
 const g_messages = require('./messages.json');
+const g_interval = setInterval(fixup_users_online, 1000);
 
 const g_websocket_server_port = 9001;
 const g_http_server_port = 9002;
@@ -15,10 +16,20 @@ var g_map_userid_login_message = new Map();
 var g_login_message_to_all = "";
 var g_maintenance_message = "";
 var g_switch_more_log = 0;
-var g_switch_less_log = 1;//针对http和弹框消息
+var g_switch_less_log = 1;//针对http和弹框消息	
 var g_log_file = "ws_http.log";
 var g_message_file = "messages.json";
 
+//定时清理函数
+function fixup_users_online(){
+	var msg = util.format("fixup_users_online fixup users size:%d", g_map_ws_userid.size;
+	if(g_map_ws_userid.size > 0)
+		g_map_ws_userid.clear();//让玩家断开重新连接
+
+	log_writer(msg);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+}
 //登录消息，维护消息初始化与持久化
 g_maintenance_message = g_messages["maintenance_message"];
 g_login_message_to_all = g_messages["login_message"];
@@ -35,7 +46,6 @@ function save_msg_to_file(){
 
 	fs.appendFileSync(g_message_file, jsonstr, {flag:'w'});
 }
-
 //写日志
 function log_writer(log_message){
 	//var date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -321,6 +331,7 @@ g_http_server.on("request", function (req, res) {
 				retStr = clear_userid_login_msg(datajson.arg);
 			else if(datajson.id == 900006)//查询用户是否在线
 				retStr = query_user_is_online(datajson.arg);
+/*********************************内部与外部消息分割*********************************************/	
 			else if(datajson.id == 100001)//在线人数
 				retStr = query_users_online();
 			else if(datajson.id == 100002)//发送弹窗消息
