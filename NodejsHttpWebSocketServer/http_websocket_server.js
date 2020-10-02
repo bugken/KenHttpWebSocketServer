@@ -108,7 +108,7 @@ function broadcast_message(type, message){
 		str = JSON.stringify(json);
 		item[1].send(str);
 
-		var msg = util.format("broadcast_message userid:%d type:%d message:%s.",item[0], type, message);
+		var msg = util.format("broadcast_message userid:%d(%s) type:%d message:%s.",item[0], item[0]._socket.remoteAddress, type, message);
 		log_writer(msg);
 		if (g_switch_less_log == 1)
 			console.log(msg);
@@ -116,7 +116,7 @@ function broadcast_message(type, message){
 }
 //发送消息给特定玩家 type 1:弹窗消息 2:维护消息
 function notify_message(userid, type, message){
-	var msg = util.format("notify_message userid:%d type:%d message:%s.",userid, type, message);
+	var msg = util.format("notify_message userid:%d(%s) type:%d message:%s.",userid, ws._socket.remoteAddress, type, message);
 	log_writer(msg);
 	if(g_switch_less_log == 1)
 		console.log(msg);
@@ -127,7 +127,7 @@ function notify_message(userid, type, message){
 		json = {"id":200001, "arg":{"type":type, "message":message}};  
 		str = JSON.stringify(json);
 		if (g_switch_less_log == 1)
-			console.log("send to: %d msg: %s", userid, str);
+			console.log("send to: %d(%s) msg: %s", userid, ws._socket.remoteAddress, str);
 
 		ws.send(str);
 	}
@@ -243,7 +243,7 @@ g_http_server.on("request", function (req, res) {
 		data += chunk;  
 	}); 
 	req.on("end",function(){
-		var log_message = util.format("http received data from web:%s", data);  
+		var log_message = util.format("http received data from web(%s):%s", req.connection.remoteAddress, data);  
 		write_log(log_message);
 		if (g_switch_less_log == 1)
 			console.log(log_message);
@@ -278,7 +278,7 @@ g_http_server.on("request", function (req, res) {
 				retStr = handle_pop_login_message(datajson.arg);
 			
 			res.end(JSON.stringify(retStr));
-			var log_message = util.format("reply to web:%s", JSON.stringify(retStr));
+			var log_message = util.format("reply to web(%s):%s", req.connection.remoteAddress, JSON.stringify(retStr));
 			log_writer(log_message);
 			if (g_switch_less_log == 1)
 				console.log(log_message);
@@ -331,7 +331,7 @@ function ws_notify_message(ws){
 		json = {"id":200001, "arg":{"type":type, "message":message}};
 		str = JSON.stringify(json);
 		if (g_switch_more_log == 1)
-			console.log("send to: %d msg: %s", 0, str);
+			console.log("send to: %d(%s) msg: %s", 0, ws._socket.remoteAddress, str);
 		ws.send(str);
 	}
 }
@@ -347,7 +347,7 @@ g_ws_server.on("connection", function connection(ws, req) {
 	ws.on('message', function incoming(message) {
 		try{
 			if (g_switch_more_log == 1)
-				console.log("ws receive message:%s", message);
+				console.log("from ws(%s) receive message:%s",ws._socket.remoteAddress, message);
 			datajson = JSON.parse(message);  
 			//客户端向服务端发送的第一条消息，告诉服务端用户的信息
 			if(datajson.id == 100001){
@@ -389,7 +389,7 @@ g_ws_server.on("connection", function connection(ws, req) {
 			if(item[1] == ws){
 				g_map_ws_userid.delete(item[0]);
 				if (g_switch_more_log == 1)
-					console.log("delete userid %d, g_map_ws_userid size %d", item[0], g_map_ws_userid.size);
+					console.log("delete userid %d(%s), g_map_ws_userid size %d", item[0], item[1]._socket.remoteAddress, g_map_ws_userid.size);
 				break;
 			}
 		}
