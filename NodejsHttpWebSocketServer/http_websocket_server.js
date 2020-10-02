@@ -2,6 +2,7 @@ const WebSocket = require("ws");
 const http = require("http");
 const util = require("util");
 const fs = require('fs');
+var moment = require('moment');
 
 const g_websocket_server_port = 9001;
 const g_http_server_port = 9002;
@@ -18,7 +19,8 @@ var g_log_file = "ws_http.log";
 
 //写日志
 function log_writer(log_message){
-	var date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+	//var date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+	var date = moment().format("YYYY-MM-DD HH:mm:ss");
 	fs.appendFileSync(g_log_file, "[".concat(date).concat("]").concat(log_message).concat("\n"),{flag:'a'});
 }
 //打印在线人数信息，包括在线人数数量和useid
@@ -244,7 +246,7 @@ g_http_server.on("request", function (req, res) {
 	}); 
 	req.on("end",function(){
 		var log_message = util.format("http received data from web(%s):%s", req.connection.remoteAddress, data);  
-		write_log(log_message);
+		log_writer(log_message);
 		if (g_switch_less_log == 1)
 			console.log(log_message);
 

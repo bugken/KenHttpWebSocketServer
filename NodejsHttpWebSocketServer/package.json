@@ -5,6 +5,7 @@
   "main": "http_server.js",
   "dependencies": {
     "http": "^0.0.1-security",
+    "moment": "^2.29.0",
     "nodejs-websocket": "^1.7.2",
     "sleep": "^6.3.0",
     "url": "^0.11.0",
