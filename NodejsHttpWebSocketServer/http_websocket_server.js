@@ -22,10 +22,10 @@ var g_message_file = "messages.json";
 //登录消息，维护消息初始化与持久化
 g_maintenance_message = g_messages["maintenance_message"];
 g_login_message_to_all = g_messages["login_message"];
-var msg = util.format("read maintenance message:%s.", g_maintenance_message);
+var msg = util.format("read maintenance message:%s", g_maintenance_message);
 console.log(msg);
 log_writer(msg);
-msg = util.format("read login message:%s.", g_login_message_to_all);
+msg = util.format("read login message:%s", g_login_message_to_all);
 console.log(msg);
 log_writer(msg);
 //保存消息到文件
@@ -139,6 +139,21 @@ function query_users_online(){
 	//var counts = g_ws_server.clients.size;
 	var counts = g_map_ws_userid.size;
 	var json = {"ret":0, "users_online":counts};
+	return json;
+}
+//查询用户是否在线
+function query_user_is_online(json_data){
+	var status = "offline"
+	if(json_data.userid > 0){		
+		if(g_map_ws_userid.has(json_data.userid))
+			status = "online";
+	}
+	var msg = util.format("user:%d now is %s", json_data.userid, status);
+	log_writer(msg);
+	if (g_switch_less_log == 1)
+		console.log(msg);
+
+	var json = {"ret":0, "return_message":status};
 	return json;
 }
 //广播数据给用户 type 1:弹窗消息 2:维护消息
@@ -302,8 +317,10 @@ g_http_server.on("request", function (req, res) {
 				retStr = clear_message();
 			else if(datajson.id == 900004)//日志开关
 				retStr = log_switch(datajson.arg);
-			else if(datajson.id == 900005)//日志开关
+			else if(datajson.id == 900005)//清除单个用户登录弹框消息
 				retStr = clear_userid_login_msg(datajson.arg);
+			else if(datajson.id == 900006)//查询用户是否在线
+				retStr = query_user_is_online(datajson.arg);
 			else if(datajson.id == 100001)//在线人数
 				retStr = query_users_online();
 			else if(datajson.id == 100002)//发送弹窗消息
@@ -323,7 +340,7 @@ g_http_server.on("request", function (req, res) {
 			}
 			else if(datajson.id == 100005)//登录与弹窗消息
 				retStr = handle_pop_login_message(datajson.arg);
-			
+
 			res.end(JSON.stringify(retStr));
 			var log_message = util.format("reply to web(%s):%s", req.connection.remoteAddress, JSON.stringify(retStr));
 			log_writer(log_message);
