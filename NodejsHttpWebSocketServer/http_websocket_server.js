@@ -4,7 +4,8 @@ const util = require("util");
 const fs = require('fs');
 const moment = require('moment');
 const g_messages = require('./messages.json');
-const g_interval = setInterval(fixup_users_online, 10*60*1000);
+const g_interval_fixup = setInterval(fixup_users_online, 10*60*1000);
+const g_interval_heartbeat = setInterval(heart_beat_check, 20*60*1000);
 
 const g_websocket_server_port = 9001;
 const g_http_server_port = 9002;
@@ -12,6 +13,7 @@ const g_ws_server = new WebSocket.Server({ port: g_websocket_server_port });
 const g_http_server = http.createServer();
 
 var g_map_ws_container = new Map();
+var g_map_keepalive_container = new Map();
 var g_map_userid_login_message = new Map();
 var g_login_message_to_all = "";
 var g_maintenance_message = "";
@@ -20,6 +22,10 @@ var g_switch_less_log = 1;//针对http和弹框消息
 var g_log_file = "ws_http.log";
 var g_message_file = "messages.json";
 
+//心跳检查机制
+function heart_beat_check(){
+	//g_map_keepalive_container 操作
+}
 //定时清理函数
 function fixup_users_online(){
 	var size =  g_map_ws_container.size;
@@ -387,6 +393,14 @@ g_http_server.on("timeout", function (socket) {
 });
 
 /*****************************************websocket server************************************************/
+//创建用户对象保存相关信息
+function create_user_object(userid, ws){
+	var user_obj = new Object();
+	user_obj.id = id;
+	user_obj.socket = ws;
+	user_obj.time_online = moment().format("YYYY-MM-DD HH:mm:ss");
+	return user_obj;
+}
 //针对userid == 0的发送函数
 function ws_notify_message(ws){
 	var type = 0;
@@ -415,14 +429,12 @@ g_ws_server.on("listening", function listen(){
 });
 //接收到客户端请求时触发
 g_ws_server.on("connection", function connection(ws, req) {
-	//接收到消息
-	ws.on('message', function incoming(message) {
+	ws.on('message', function incoming(message) {//接收到消息
 		try{
 			if (g_switch_more_log == 1)
 				console.log("from ws(%s) receive message:%s",ws._socket.remoteAddress, message);
 			datajson = JSON.parse(message);  
-			//客户端向服务端发送的第一条消息，告诉服务端用户的信息
-			if(datajson.id == 100001){
+			if(datajson.id == 100001){//客户端向服务端发送的第一条消息，告诉服务端用户的信息
 				var userid = datajson.arg.userid;
 				if(g_maintenance_message != ""){
 					ws_notify_message(ws);
@@ -433,8 +445,7 @@ g_ws_server.on("connection", function connection(ws, req) {
 				else//将userid ws加入map
 					g_map_ws_container.set(userid, ws);
 			}
-			//向服务端请求弹窗信息
-			else if(datajson.id == 100002){
+			else if(datajson.id == 100002){//向服务端请求弹窗信息
 				var userid = datajson.arg.userid;
 				if(userid == 0)
 					ws_notify_message(ws);
@@ -446,6 +457,10 @@ g_ws_server.on("connection", function connection(ws, req) {
 					notify_message(userid, 1, g_map_userid_login_message.get(userid));
 				if(g_login_message_to_all != "")
 					notify_message(userid, 1, g_login_message_to_all);
+			}
+			else if(datajson.id == 100003){//心跳包
+				var userid = datajson.arg.userid;
+				//userid在g_map_keepalive_container中，更新信息，不在其中创建对象create_user_object
 			}
 		}
 		catch(e){
