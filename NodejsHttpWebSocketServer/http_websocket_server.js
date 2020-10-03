@@ -201,7 +201,7 @@ function notify_message(userid, type, message){
 
 	return ret;
 }
-//发送数据
+//发送弹框消息
 function send_message(json_data){
 	var ret = 0;
 	var error_message = "";
@@ -247,6 +247,24 @@ function update_login_message(json_data){
 	}
 	save_msg_to_file();//持久化
 	var json = {"ret":ret, "error_message":error_message};
+	return json;
+}
+//维护消息处理
+function update_maintenance_message(json_data){
+	var msg = util.format("update_maintenance_message type:%d userid:%d message:%s.", json_data.type, json_data.userid, json_data.message);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+	log_writer(msg);
+	
+	if(json_data.type == 1){
+		g_maintenance_message = datajson.arg.message;
+		broadcast_message(2, g_maintenance_message);
+	}
+	else if(json_data.type == 0){
+		g_maintenance_message = "";
+	}
+	save_msg_to_file();
+	json = {"ret":0, "error_message":""};
 	return json;
 }
 //处理登录与弹框消息
@@ -333,24 +351,15 @@ g_http_server.on("request", function (req, res) {
 				retStr = clear_userid_login_msg(datajson.arg);
 			else if(datajson.id == 900006)//查询用户是否在线
 				retStr = query_user_is_online(datajson.arg);
-/*********************************内部与外部消息分割*********************************************/	
+	/***************************内部与外部消息分割*****************************/	
 			else if(datajson.id == 100001)//在线人数
 				retStr = query_users_online();
-			else if(datajson.id == 100002)//发送弹窗消息
+			else if(datajson.id == 100002)//弹窗消息
 				retStr = send_message(datajson.arg);
-			else if(datajson.id == 100003)//保存登录消息
+			else if(datajson.id == 100003)//登录消息
 				retStr = update_login_message(datajson.arg);
-			else if(datajson.id == 100004){//维护消息
-				if(datajson.arg.type == 1){
-					g_maintenance_message = datajson.arg.message;
-					broadcast_message(2, g_maintenance_message);
-				}
-				else if(datajson.arg.type == 0){
-					g_maintenance_message = "";
-				}
-				save_msg_to_file();
-				retStr = {"ret":0, "error_message":""};
-			}
+			else if(datajson.id == 100004)//维护消息
+				retStr = update_maintenance_message(datajson.arg);
 			else if(datajson.id == 100005)//登录与弹窗消息
 				retStr = handle_pop_login_message(datajson.arg);
 			else if(datajson.id == 100006)//踢用户下线
@@ -396,10 +405,38 @@ g_http_server.on("timeout", function (socket) {
 //创建用户对象保存相关信息
 function create_user_object(userid, ws){
 	var user_obj = new Object();
-	user_obj.id = id;
+	user_obj.id = userid;
 	user_obj.socket = ws;
-	user_obj.time_online = moment().format("YYYY-MM-DD HH:mm:ss");
+	user_obj.time_heartbeat = moment().format("YYYY-MM-DD HH:mm:ss");
 	return user_obj;
+}
+//处理客户端的弹窗请求
+function handle_msg_request(userid, ws){
+	if(userid == 0){
+		ws_notify_message(ws);
+		return;
+	}
+	if(!g_map_ws_container.has(userid))//没有的话加进去
+		g_map_ws_container.set(userid, ws);
+	if(g_maintenance_message != ""){
+		notify_message(userid, 2, g_maintenance_message);
+		return;
+	}
+	if(g_map_userid_login_message.has(userid))//针对特定用户的登录弹窗
+		notify_message(userid, 1, g_map_userid_login_message.get(userid));
+	if(g_login_message_to_all != "")
+		notify_message(userid, 1, g_login_message_to_all);
+}
+//处理用户发来的id信息
+function handle_user_info(userid, ws){
+	if(g_maintenance_message != ""){
+		ws_notify_message(ws);
+		return;
+	}
+	if(userid == 0)
+		ws_notify_message(ws);
+	else//将userid ws加入map
+		g_map_ws_container.set(userid, ws);
 }
 //针对userid == 0的发送函数
 function ws_notify_message(ws){
@@ -435,28 +472,10 @@ g_ws_server.on("connection", function connection(ws, req) {
 				console.log("from ws(%s) receive message:%s",ws._socket.remoteAddress, message);
 			datajson = JSON.parse(message);  
 			if(datajson.id == 100001){//客户端向服务端发送的第一条消息，告诉服务端用户的信息
-				var userid = datajson.arg.userid;
-				if(g_maintenance_message != ""){
-					ws_notify_message(ws);
-					return;
-				}
-				if(userid == 0)
-					ws_notify_message(ws);
-				else//将userid ws加入map
-					g_map_ws_container.set(userid, ws);
+				handle_user_info(datajson.arg.userid, ws);
 			}
-			else if(datajson.id == 100002){//向服务端请求弹窗信息
-				var userid = datajson.arg.userid;
-				if(userid == 0)
-					ws_notify_message(ws);
-				if(g_maintenance_message != ""){
-					notify_message(userid, 2, g_maintenance_message);
-					return;
-				}
-				if(g_map_userid_login_message.has(userid))//针对特定用户的登录弹窗
-					notify_message(userid, 1, g_map_userid_login_message.get(userid));
-				if(g_login_message_to_all != "")
-					notify_message(userid, 1, g_login_message_to_all);
+			else if(datajson.id == 100002){//客户端请求弹窗信息
+				handle_msg_request(datajson.arg.userid, ws);
 			}
 			else if(datajson.id == 100003){//心跳包
 				var userid = datajson.arg.userid;
