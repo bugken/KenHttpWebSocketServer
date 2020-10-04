@@ -4,9 +4,9 @@ const util = require("util");
 const fs = require('fs');
 const moment = require('moment');
 const g_messages = require('./messages.json');
-const g_ms_db = require('./ms_db');
+//const g_ms_db = require('./ms_db');
 const g_interval_fixup = setInterval(fixup_users_online, 10*60*1000);
-const g_interval_heartbeat = setInterval(heart_beat_check, 20*60*1000);
+//const g_interval_heartbeat = setInterval(heart_beat_check, 20*60*1000);
 
 const g_websocket_server_port = 9001;
 const g_http_server_port = 9002;
@@ -23,7 +23,6 @@ var g_switch_less_log = 1;//针对http和弹框消息
 var g_log_file = "ws_http.log";
 var g_message_file = "messages.json";
 
-get_all_users();
 //在线人数插入数据
 function users_num_online(){
 	console.log(users_num_online);
