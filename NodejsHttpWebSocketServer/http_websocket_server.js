@@ -177,14 +177,19 @@ function query_user_is_online(json_data){
 	var json = {"ret":0, "return_message":status};
 	return json;
 }
-//广播数据给用户 type 1:弹窗消息 2:维护消息
-function broadcast_message(type, message){
+//广播数据给用户 msg:200001 type 1:弹窗消息 2:维护消息
+function broadcast_message(msgid, type, message){
+	var json = {"id":msgid, "arg":{"type":type, "message": message}}; 
+	if(type != '' && message != ''){
+		json = {"id":msgid, "arg":{"type":type, "message": message}};
+	}else{
+		json = {"id":msgid, "arg":{}};
+	}
 	for (var item of g_map_ws_container.entries()) {
-		json = {"id":200001, "arg":{"type":type, "message": message}};  //200001:客户端弹窗消息
 		str = JSON.stringify(json);
 		item[1].send(str);
 
-		var msg = util.format("broadcast_message userid:%d(%s) type:%d message:%s.",item[0], item[1]._socket.remoteAddress, type, message);
+		var msg = util.format("broadcast_message msgid:%d, userid:%d(%s) type:%d message:%s.", msgid, item[0], item[1]._socket.remoteAddress, type, message);
 		log_writer(msg);
 		if (g_switch_less_log == 1)
 			console.log(msg);
@@ -222,7 +227,7 @@ function send_message(json_data){
 			error_message = util.format("userid:%d 不在线", json_data.userid);
 	}
 	else if(json_data.userid == 0)//广播消息
-		broadcast_message(1, json_data.message);
+		broadcast_message(200001, 1, json_data.message);
 	else{
 		ret = -1;
 		error_message = util.format("userid %d 不正确", json_data.userid);
@@ -268,7 +273,7 @@ function update_maintenance_message(json_data){
 
 	if(json_data.type == 1){
 		g_maintenance_message = datajson.arg.message;
-		broadcast_message(2, g_maintenance_message);
+		broadcast_message(200001, 2, g_maintenance_message);
 	}
 	else if(json_data.type == 0){
 		g_maintenance_message = "";
@@ -299,7 +304,7 @@ function handle_pop_login_message(json_data){
 			g_login_message_to_all = "";
 		else{
 			g_login_message_to_all = json_data.message;
-			broadcast_message(1, json_data.message);//弹窗提示
+			broadcast_message(200001, 1, json_data.message);//弹窗提示
 		}
 	}
 	else{
