@@ -179,16 +179,14 @@ function query_user_is_online(json_data){
 //广播数据给用户 msg:200001 type 1:弹窗消息 2:维护消息
 function broadcast_message(msgid, type, message){
 	var json = {"id":msgid, "arg":{"type":type, "message": message}}; 
-	if(type != '' && message != ''){
-		json = {"id":msgid, "arg":{"type":type, "message": message}};
-	}else{
+	if(type == 0 && message == '')
 		json = {"id":msgid, "arg":{}};
-	}
+
 	for (var item of g_map_ws_container.entries()) {
 		str = JSON.stringify(json);
 		item[1].send(str);
 
-		var msg = util.format("broadcast_message msgid:%d, userid:%d(%s) type:%d message:%s.", msgid, item[0], item[1]._socket.remoteAddress, type, message);
+		var msg = util.format("broadcast_message msgid:%d, userid:%d(%s) type:%d message:%s", msgid, item[0], item[1]._socket.remoteAddress, type, message);
 		log_writer(msg);
 		if (g_switch_less_log == 1)
 			console.log(msg);
@@ -326,6 +324,12 @@ function kickoff_user(json_data){
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
+//客户端强制刷新升级消息
+function client_update(){
+	ret = broadcast_message(200002, 0, '');
+	var json = {"ret":0, "error_message":""};
+	return json;
+}
 /*****************************************http server************************************************/
 //监听端口
 g_http_server.listen(g_http_server_port, "0.0.0.0");
@@ -378,6 +382,8 @@ g_http_server.on("request", function (req, res) {
 				retStr = handle_pop_login_message(datajson.arg);
 			else if(datajson.id == 100006)//踢用户下线
 				retStr = kickoff_user(datajson.arg);
+			else if(datajson.id == 100007)//客户端强制刷新升级消息
+				retStr = client_update();
 
 			res.end(JSON.stringify(retStr));
 			var log_message = util.format("reply to web(%s):%s", req.connection.remoteAddress, JSON.stringify(retStr));

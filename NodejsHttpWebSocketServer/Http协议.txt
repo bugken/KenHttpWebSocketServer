@@ -168,3 +168,16 @@
 	"error_message":error_message
 }
 
+客户端强制刷新升级消息
+[Request]:
+{
+	"id":100007, 
+	"arg":{
+	}
+}
+[Response]:
+{
+	"ret":0,	
+	"error_message":error_message
+}
+
