@@ -5,7 +5,7 @@ const fs = require('fs');
 const moment = require('moment');
 const g_messages = require('./messages.json');
 //const g_ms_db = require('./ms_db');
-const g_interval_fixup = setInterval(fixup_users_online, 10*60*1000);
+const g_interval_fixup = setInterval(fixup_users_online, 5*60*1000);
 //const g_interval_heartbeat = setInterval(heart_beat_check, 20*60*1000);
 
 const g_websocket_server_port = 9001;
