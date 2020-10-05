@@ -18,7 +18,7 @@ var g_map_keepalive_container = new Map();
 var g_map_userid_login_message = new Map();
 var g_login_message_to_all = "";
 var g_maintenance_message = "";
-var g_switch_more_log = 1;
+var g_switch_more_log = 0;
 var g_switch_less_log = 1;//针对http和弹框消息	
 var g_log_file = "ws_http.log";
 var g_message_file = "messages.json";
@@ -176,7 +176,7 @@ function query_user_is_online(json_data){
 	var json = {"ret":0, "return_message":status};
 	return json;
 }
-//广播数据给用户 msg:200001 type 1:弹窗消息 2:维护消息
+//广播数据给用户 msg:200001 type 1:弹窗消息 2:维护消息 msg:200002 强制刷新消息
 function broadcast_message(msgid, type, message){
 	var json = {"id":msgid, "arg":{"type":type, "message": message}}; 
 	if(type == 0 && message == '')
@@ -263,13 +263,13 @@ function update_login_message(json_data){
 }
 //维护消息处理
 function update_maintenance_message(json_data){
-	var msg = util.format("update_maintenance_message type:%d userid:%d message:%s.", json_data.type, json_data.userid, json_data.message);
+	var msg = util.format("update_maintenance_message type:%d message:%s.", json_data.type, json_data.message);
 	if(g_switch_less_log == 1)
 		console.log(msg);
 	log_writer(msg);
 
 	if(json_data.type == 1){
-		g_maintenance_message = datajson.arg.message;
+		g_maintenance_message = json_data.message;
 		broadcast_message(200001, 2, g_maintenance_message);
 	}
 	else if(json_data.type == 0){
