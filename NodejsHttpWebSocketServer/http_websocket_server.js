@@ -223,8 +223,10 @@ function send_message(json_data){
 		if(ret == -1)
 			error_message = util.format("userid:%d 不在线", json_data.userid);
 	}
-	else if(json_data.userid == 0)//广播消息
-		broadcast_message(200001, 1, json_data.message);
+	else if(json_data.userid == 0){//广播消息
+		if(json_data.type == 1)//type==0时不发送消息
+			broadcast_message(200001, 1, json_data.message);
+	}
 	else{
 		ret = -1;
 		error_message = util.format("userid %d 不正确", json_data.userid);

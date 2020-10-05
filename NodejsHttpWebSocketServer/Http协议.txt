@@ -96,6 +96,7 @@
 {
 	"id":100002, 
 	"arg":{
+		"type":1,	//type 1:发送消息 0:不发送弹框消息
 		"userid":234,	//userid为0时候，发消息给所有玩家，userid不为0时候,发送消息给该玩家
 		"message":"lottery"
 	}
