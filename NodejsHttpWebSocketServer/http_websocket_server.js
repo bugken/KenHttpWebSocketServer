@@ -326,7 +326,7 @@ function kickoff_user(json_data){
 	}
 	if(g_map_ws_container.has(json_data.userid))
 	{
-		g_map_ws_container[json_data.userid].close();
+		g_map_ws_container.get(json_data.userid).close();
 		g_map_ws_container.delete(json_data.userid);
 	}
 	var json = {"ret":ret, "error_message":error_message};
