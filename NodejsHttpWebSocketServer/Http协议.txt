@@ -78,6 +78,20 @@
 	"ret":0,
 	"return_message":"offline" //offline:不在线 online:在线
 } 
+
+踢所有人下线
+[Request]:
+{
+	"id":900007, 
+	"arg":{
+		"message":"你被强制下线"
+	}
+}
+[Response]:
+{
+	"ret":0,
+	"return_message":"offline" //offline:不在线 online:在线
+} 
 --------------------------------------------外部使用-------------------------------------------------
 查询在线人数
 [Request]:

@@ -332,6 +332,22 @@ function kickoff_user(json_data){
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
+//踢所有玩家下线
+function kickoff_all_user(json_data){
+	if(g_map_ws_container.size > 0){
+		for (var item of g_map_ws_container.entries()) {
+			ret = notify_message(item[0], 3, json_data.message);
+			g_map_ws_container.delete(item[0]);
+			item[1].close();
+			var kickoff_info = util.format("kickoff_all_user userid:%d message:%s", item[0], json_data.message);
+			log_writer(kickoff_info);
+			if(g_switch_less_log == 1)
+				console.log(kickoff_info);
+		}
+	}
+	var json = {"ret":0, "error_message":""};
+	return json;
+}
 //客户端强制刷新升级消息
 function client_update(){
 	ret = broadcast_message(200002, 0, '');
@@ -377,6 +393,8 @@ g_http_server.on("request", function (req, res) {
 				retStr = clear_userid_login_msg(datajson.arg);
 			else if(datajson.id == 900006)//查询用户是否在线
 				retStr = query_user_is_online(datajson.arg);
+			else if(datajson.id == 900007)//踢所有人下线
+				retStr = kickoff_all_user(datajson.arg);
 	/***************************内部与外部消息分割*****************************/	
 			else if(datajson.id == 100001)//在线人数
 				retStr = query_users_online();
