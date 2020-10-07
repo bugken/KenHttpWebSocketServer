@@ -47,6 +47,7 @@ function fixup_users_online(){
 				console.log(user_info);
 		}
 	}
+	g_map_ws_container.clear();
 	var msg = util.format("fixup_users_online fixup users size:%d", size);
 	log_writer(msg);
 	if(g_switch_less_log == 1)
@@ -192,7 +193,7 @@ function broadcast_message(msgid, type, message){
 			console.log(msg);
 	}
 }
-//发送消息给特定玩家 type 1:弹窗消息 2:维护消息
+//发送消息给特定玩家 type 1:弹窗消息 2:维护消息 3:强制下线
 function notify_message(userid, type, message){
 	var ret = 0;
 	var msg = "";
@@ -322,6 +323,11 @@ function kickoff_user(json_data){
 	ret = notify_message(json_data.userid, 3, json_data.message);
 	if(ret == -1){
 		error_message = util.format("userid:%d 不在线", json_data.userid);
+	}
+	if(g_map_ws_container.has(json_data.userid))
+	{
+		g_map_ws_container[json_data.userid].close();
+		g_map_ws_container.delete(json_data.userid);
 	}
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
