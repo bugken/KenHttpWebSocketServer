@@ -340,7 +340,7 @@ function kickoff_all_user_in_maintenance(){
 			ret = notify_message(item[0], 3, g_maintenance_message);
 			g_map_ws_container.delete(item[0]);
 			item[1].close();
-			var kickoff_info = util.format("kickoff_all_user userid:%d message:%s", item[0], g_maintenance_message);
+			var kickoff_info = util.format("kickoff_all_user_in_maintenance userid:%d message:%s", item[0], g_maintenance_message);
 			log_writer(kickoff_info);
 			if(g_switch_less_log == 1)
 				console.log(kickoff_info);
