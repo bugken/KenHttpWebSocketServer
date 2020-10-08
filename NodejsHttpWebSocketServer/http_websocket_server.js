@@ -335,7 +335,7 @@ function kickoff_user(json_data){
 }
 //踢所有玩家下线
 function kickoff_all_user_in_maintenance(){
-	if(g_map_ws_container.size > 0 && g_maintenance_message != ""){
+	if( g_maintenance_message != "" && g_map_ws_container.size > 0){
 		for (var item of g_map_ws_container.entries()) {
 			ret = notify_message(item[0], 3, g_maintenance_message);
 			g_map_ws_container.delete(item[0]);
