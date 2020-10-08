@@ -6,6 +6,7 @@ const moment = require('moment');
 const g_messages = require('./messages.json');
 //const g_ms_db = require('./ms_db');
 const g_interval_fixup = setInterval(fixup_users_online, 5*60*1000);
+//const g_interval_kickoffallusers = setInterval(kickoff_all_user_in_maintenance, 30*1000);
 //const g_interval_heartbeat = setInterval(heart_beat_check, 20*60*1000);
 
 const g_websocket_server_port = 9001;
@@ -333,13 +334,13 @@ function kickoff_user(json_data){
 	return json;
 }
 //踢所有玩家下线
-function kickoff_all_user(json_data){
+function kickoff_all_user_in_maintenance(){
 	if(g_map_ws_container.size > 0){
 		for (var item of g_map_ws_container.entries()) {
-			ret = notify_message(item[0], 3, json_data.message);
+			ret = notify_message(item[0], 3, g_maintenance_message);
 			g_map_ws_container.delete(item[0]);
 			item[1].close();
-			var kickoff_info = util.format("kickoff_all_user userid:%d message:%s", item[0], json_data.message);
+			var kickoff_info = util.format("kickoff_all_user userid:%d message:%s", item[0], g_maintenance_message);
 			log_writer(kickoff_info);
 			if(g_switch_less_log == 1)
 				console.log(kickoff_info);
