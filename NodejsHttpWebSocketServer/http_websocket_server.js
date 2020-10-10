@@ -8,7 +8,6 @@ const g_messages = require('./messages.json');
 const g_interval_fixup = setInterval(fixup_users_online, 5*60*1000);
 const g_interval_kickoffallusers = setInterval(kickoff_all_user_in_maintenance, 30*1000);
 //const g_interval_heartbeat = setInterval(heart_beat_check, 20*60*1000);
-
 const g_websocket_server_port = 9001;
 const g_http_server_port = 9002;
 const g_ws_server = new WebSocket.Server({ port: g_websocket_server_port });
@@ -23,6 +22,8 @@ var g_switch_more_log = 0;
 var g_switch_less_log = 1;//针对http和弹框消息	
 var g_log_file = "ws_http.log";
 var g_message_file = "messages.json";
+var g_http_ip_white_list_set = new Set();
+g_http_ip_white_list_set.add("47.56.7.183");//增加IP白名单
 
 //在线人数插入数据
 function users_num_online(){
@@ -429,6 +430,8 @@ g_http_server.on("request", function (req, res) {
 });
 //连接建立时触发
 g_http_server.on("connection", function (socket) {
+	if(!g_http_ip_white_list_set.has(socket.remoteAddress))
+		socket.destroy();//不在IP白名单中，不允许连接
 	return;
 });
 //客户端向服务器发送CONNECT请求时触发
