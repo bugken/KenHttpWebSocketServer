@@ -430,8 +430,13 @@ g_http_server.on("request", function (req, res) {
 });
 //连接建立时触发
 g_http_server.on("connection", function (socket) {
-	if(!g_http_ip_white_list_set.has(socket.remoteAddress))
+	if(!g_http_ip_white_list_set.has(socket.remoteAddress)){
 		socket.destroy();//不在IP白名单中，不允许连接
+		var log = util.format("socket ip(%s) not in whitelist,destroy socket.", socket.remoteAddress);
+		console.log(log);
+		if(g_switch_less_log == 1)
+			log_writer(log);
+	}		
 	return;
 });
 //客户端向服务器发送CONNECT请求时触发
