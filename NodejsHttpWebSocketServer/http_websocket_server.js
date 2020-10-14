@@ -24,8 +24,9 @@ var g_switch_less_log = 1;//针对http和弹框消息
 var g_log_file = "ws_http.log";
 var g_message_file = "messages.json";
 var g_http_ip_white_list_set = new Set();
-g_http_ip_white_list_set.add("47.56.7.183");//增加IP白名单
-g_http_ip_white_list_set.add("127.0.0.1");
+	g_http_ip_white_list_set.add("47.56.7.183");//增加IP白名单
+	g_http_ip_white_list_set.add("127.0.0.1");
+var g_white_list_switch = 1;
 
 //在线人数插入数据
 function users_num_online(){
@@ -384,6 +385,16 @@ function update_announcement_message(json_data){
 	json = {"ret":0, "error_message":""};
 	return json;
 }
+
+function white_list_switch(json_data){
+		g_white_list_switch = json_data.switch;
+		var msg = util.format("white_list_switch type:%d", json_data.switch);
+		if(g_switch_less_log == 1)
+			console.log(msg);
+		log_writer(msg);
+		json = {"ret":0, "error_message":""};
+		return json;
+}
 /*****************************************http server************************************************/
 //监听端口
 g_http_server.listen(g_http_server_port, "0.0.0.0");
@@ -425,6 +436,8 @@ g_http_server.on("request", function (req, res) {
 				retStr = query_user_is_online(datajson.arg);
 			else if(datajson.id == 900007)//踢所有人下线
 				retStr = kickoff_all_user(datajson.arg);
+			else if(datajson.id == 900008)//打印信息开关
+				retStr = white_list_switch(datajson.arg);
 	/***************************内部与外部消息分割*****************************/	
 			else if(datajson.id == 100001)//在线人数
 				retStr = query_users_online();
@@ -460,7 +473,7 @@ g_http_server.on("request", function (req, res) {
 });
 //连接建立时触发
 g_http_server.on("connection", function (socket) {
-	if(!g_http_ip_white_list_set.has(socket.remoteAddress)){
+	if((!g_http_ip_white_list_set.has(socket.remoteAddress)) && (g_white_list_switch == 1)){
 		socket.destroy();//不在IP白名单中，不允许连接
 		var log = util.format("socket ip(%s) not in whitelist,destroy socket.", socket.remoteAddress);
 		console.log(log);
