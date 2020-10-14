@@ -366,7 +366,7 @@ function client_update(){
 	var json = {"ret":0, "error_message":""};
 	return json;
 }
-//公告消息
+//大厅滚动消息
 function update_announcement_message(json_data){
 	var msg = util.format("update_announcement_message type:%d message:%s.", json_data.type, json_data.message);
 	if(g_switch_less_log == 1)
@@ -440,7 +440,7 @@ g_http_server.on("request", function (req, res) {
 				retStr = kickoff_user(datajson.arg);
 			else if(datajson.id == 100007)//客户端强制刷新升级消息
 				retStr = client_update();
-			else if(datajson.id == 100008)//公告消息
+			else if(datajson.id == 100008)//大厅滚动消息
 			retStr = update_announcement_message(datajson.arg);
 
 			res.end(JSON.stringify(retStr));

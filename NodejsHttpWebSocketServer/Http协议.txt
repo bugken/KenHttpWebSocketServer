@@ -196,12 +196,12 @@
 	"error_message":error_message
 }
 
-向客户端发送公告消息与取消公告消息
+向客户端发送大厅滚动消息与取消大厅滚动消息
 [Request]:
 {
 	"id":100008, 
 	"arg":{
-		"type":1,	//type 1:公告消息 0:取消公告消息
+		"type":1,	//type 1:大厅滚动消息 0:取消大厅滚动消息
 		"message":"lottery"
 	}
 }
