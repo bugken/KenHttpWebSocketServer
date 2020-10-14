@@ -385,7 +385,7 @@ function update_announcement_message(json_data){
 	json = {"ret":0, "error_message":""};
 	return json;
 }
-
+//黑白名单开关
 function white_list_switch(json_data){
 		g_white_list_switch = json_data.switch;
 		var msg = util.format("white_list_switch type:%d", json_data.switch);
@@ -394,6 +394,18 @@ function white_list_switch(json_data){
 		log_writer(msg);
 		json = {"ret":0, "error_message":""};
 		return json;
+}
+//踢所有人下线
+function kickoff_all_user(json_data){
+	for (var item of g_map_ws_container.entries()) {
+		ret = notify_message(item[0], 3, json_data.message);
+		g_map_ws_container.delete(item[0]);
+		item[1].close();
+		var kickoff_info = util.format("kickoff_all_user userid:%d message:%s", item[0], g_maintenance_message);
+		log_writer(kickoff_info);
+		if(g_switch_less_log == 1)
+			console.log(kickoff_info);
+	}
 }
 /*****************************************http server************************************************/
 //监听端口
