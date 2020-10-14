@@ -196,3 +196,18 @@
 	"error_message":error_message
 }
 
+向客户端发送公告消息与取消公告消息
+[Request]:
+{
+	"id":100008, 
+	"arg":{
+		"type":1,	//type 1:公告消息 0:取消公告消息
+		"message":"lottery"
+	}
+}
+[Response]:
+{
+	"ret":0,	//ret为0时候发送成功，error_message为空字符串；为-1时候发送失败，error_message为错误信息
+	"error_message":error_message
+}
+

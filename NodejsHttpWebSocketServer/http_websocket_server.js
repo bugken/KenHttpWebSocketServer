@@ -18,12 +18,14 @@ var g_map_keepalive_container = new Map();
 var g_map_userid_login_message = new Map();
 var g_login_message_to_all = "";
 var g_maintenance_message = "";
+var g_announcement_message = "";
 var g_switch_more_log = 0;
 var g_switch_less_log = 1;//针对http和弹框消息	
 var g_log_file = "ws_http.log";
 var g_message_file = "messages.json";
 var g_http_ip_white_list_set = new Set();
 g_http_ip_white_list_set.add("47.56.7.183");//增加IP白名单
+g_http_ip_white_list_set.add("127.0.0.1");
 
 //在线人数插入数据
 function users_num_online(){
@@ -58,15 +60,19 @@ function fixup_users_online(){
 //登录消息，维护消息初始化与持久化
 g_maintenance_message = g_messages["maintenance_message"];
 g_login_message_to_all = g_messages["login_message"];
+g_announcement_message = g_messages["announcement_message"];
 var msg = util.format("read maintenance message:%s", g_maintenance_message);
 console.log(msg);
 log_writer(msg);
 msg = util.format("read login message:%s", g_login_message_to_all);
 console.log(msg);
 log_writer(msg);
+msg = util.format("read announcement message:%s", g_announcement_message);
+console.log(msg);
+log_writer(msg);
 //保存消息到文件
 function save_msg_to_file(){
-	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all};
+	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all, "announcement_message":g_announcement_message};
 	var jsonstr = JSON.stringify(json_src);
 	fs.appendFileSync(g_message_file, jsonstr, {flag:'w'});
 }
@@ -100,6 +106,9 @@ function dump_message(){
 	msg = util.format("dump_message login message to all:%s", g_login_message_to_all);
 	console.log(msg);
 	log_writer(msg);
+	msg = util.format("dump_message announcement message to all:%s", g_announcement_message);
+	console.log(msg);
+	log_writer(msg);
 
 	for (var item of g_map_userid_login_message.entries()) {
 		msg = util.format("dump_message message to userid:%d %s.", item[0], item[1]);
@@ -118,6 +127,7 @@ function clear_message(){
 
 	g_maintenance_message = "";
 	g_login_message_to_all = "";
+	g_announcement_message = "";
 	g_map_userid_login_message.clear();
 	save_msg_to_file();//更新文件
 	json = {"ret":0, "error_message":""};
@@ -356,6 +366,24 @@ function client_update(){
 	var json = {"ret":0, "error_message":""};
 	return json;
 }
+//公告消息
+function update_announcement_message(json_data){
+	var msg = util.format("update_announcement_message type:%d message:%s.", json_data.type, json_data.message);
+	if(g_switch_less_log == 1)
+		console.log(msg);
+	log_writer(msg);
+
+	if(json_data.type == 1){
+		g_announcement_message = json_data.message;
+		broadcast_message(200001, 4, g_announcement_message);
+	}
+	else if(json_data.type == 0){
+		g_announcement_message = "";
+	}
+	save_msg_to_file();
+	json = {"ret":0, "error_message":""};
+	return json;
+}
 /*****************************************http server************************************************/
 //监听端口
 g_http_server.listen(g_http_server_port, "0.0.0.0");
@@ -412,6 +440,8 @@ g_http_server.on("request", function (req, res) {
 				retStr = kickoff_user(datajson.arg);
 			else if(datajson.id == 100007)//客户端强制刷新升级消息
 				retStr = client_update();
+			else if(datajson.id == 100008)//公告消息
+			retStr = update_announcement_message(datajson.arg);
 
 			res.end(JSON.stringify(retStr));
 			var log_message = util.format("reply to web(%s):%s", req.connection.remoteAddress, JSON.stringify(retStr));
@@ -481,6 +511,8 @@ function handle_msg_request(userid, ws){
 		notify_message(userid, 1, g_map_userid_login_message.get(userid));
 	if(g_login_message_to_all != "")
 		notify_message(userid, 1, g_login_message_to_all);
+	if(g_announcement_message != "")
+		notify_message(userid, 4, g_announcement_message);
 }
 //处理用户发来的id信息
 function handle_user_info(userid, ws){
@@ -495,18 +527,23 @@ function handle_user_info(userid, ws){
 }
 //针对userid == 0的发送函数
 function ws_notify_message(ws){
-	var type = 0;
-	var message = "";
-	if(g_login_message_to_all != ""){
-		type = 1;
-		message = g_login_message_to_all;
-	}
 	if(g_maintenance_message != ""){//维护消息优先级比较高
-		type = 2;
-		message = g_maintenance_message;
+		json = {"id":200001, "arg":{"type":2, "message":g_maintenance_message}};
+		str = JSON.stringify(json);
+		if (g_switch_more_log == 1)
+			console.log("send to: %d(%s) msg: %s", 0, ws._socket.remoteAddress, str);
+		ws.send(str);
+		return;
 	}
-	if(message != ""){
-		json = {"id":200001, "arg":{"type":type, "message":message}};
+	if(g_login_message_to_all != ""){
+		json = {"id":200001, "arg":{"type":1, "message":messg_login_message_to_allage}};
+		str = JSON.stringify(json);
+		if (g_switch_more_log == 1)
+			console.log("send to: %d(%s) msg: %s", 0, ws._socket.remoteAddress, str);
+		ws.send(str);
+	}
+	if(g_announcement_message != ""){
+		json = {"id":200001, "arg":{"type":4, "message":g_announcement_message}};
 		str = JSON.stringify(json);
 		if (g_switch_more_log == 1)
 			console.log("send to: %d(%s) msg: %s", 0, ws._socket.remoteAddress, str);
