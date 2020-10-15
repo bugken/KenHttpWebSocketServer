@@ -107,7 +107,7 @@ function dump_message(){
 	msg = util.format("dump_message login message to all:%s", g_login_message_to_all);
 	console.log(msg);
 	log_writer(msg);
-	msg = util.format("dump_message announcement message to all:%s", g_announcement_message);
+	msg = util.format("dump_message announcement message:%s", g_announcement_message);
 	console.log(msg);
 	log_writer(msg);
 
@@ -376,11 +376,13 @@ function update_announcement_message(json_data){
 
 	if(json_data.type == 1){
 		g_announcement_message = json_data.message;
-		broadcast_message(200001, 4, g_announcement_message);
 	}
 	else if(json_data.type == 0){
 		g_announcement_message = "";
 	}
+	//无论下发还是取消滚动消息都要发给客户端
+	broadcast_message(200001, 4, g_announcement_message);
+
 	save_msg_to_file();
 	json = {"ret":0, "error_message":""};
 	return json;
@@ -548,14 +550,12 @@ function handle_user_info(userid, ws){
 	}
 	else{//将userid ws加入map
 		g_map_ws_container.set(userid, ws);
-		//发送滚动消息两种情况1.Web端下发滚动消息 2.在100001协议中userid不为0的时候
-		if(g_announcement_message != ""){
-			json = {"id":200001, "arg":{"type":4, "message":g_announcement_message}};
-			str = JSON.stringify(json);
-			if (g_switch_more_log == 1)
-				console.log("send to: %d(%s) msg: %s", 0, ws._socket.remoteAddress, str);
-			ws.send(str);
-		}
+		//发送滚动消息三种情况1.Web端下发滚动消息 2.Web端取消滚动消息 3.在100001协议中userid不为0的时候
+		var json = {"id":200001, "arg":{"type":4, "message":g_announcement_message}};
+		var str = JSON.stringify(json);
+		if (g_switch_more_log == 1)
+			console.log("send to: %d(%s) msg: %s", 0, ws._socket.remoteAddress, str);
+		ws.send(str);
 	}
 }
 //针对userid == 0的发送函数
