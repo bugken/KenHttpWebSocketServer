@@ -21,16 +21,19 @@ new Promise(function(resolve, reject){
     setTimeout(function(){
         console.log("start send data. sockets size %d.", sockets.length);
 		var userid = 0;
-		var json = {"id":1, "arg":{"userid":userid}};
 		for(i = 0; i < sockets.length; i++)
 		{
 			userid = userid + 1;
 			socket = sockets.pop();
-			json = {"id":100001, "arg":{"userid":userid}};
-			str = JSON.stringify(json);
+			var json_100001 = {"id":100001, "arg":{"userid":userid}};
+			var str_100001 = JSON.stringify(json_100001);
+			var json_100002 = {"id":100002, "arg":{"userid":userid}};
+			var str_100002 = JSON.stringify(json_100002);
 			if (socket.readyState == WebSocket.OPEN) {
-				console.log("send data:%s", str);
-				socket.send(str);
+				console.log("send data:%s", str_100001);
+				socket.send(str_100001);
+				console.log("send data:%s", str_100002);
+				socket.send(str_100002);
 			} 
 		}
         resolve('随便什么数据');
