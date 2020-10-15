@@ -561,7 +561,7 @@ function ws_notify_message(ws){
 		return;
 	}
 	if(g_login_message_to_all != ""){
-		json = {"id":200001, "arg":{"type":1, "message":messg_login_message_to_allage}};
+		json = {"id":200001, "arg":{"type":1, "message":g_login_message_to_all}};
 		str = JSON.stringify(json);
 		if (g_switch_more_log == 1)
 			console.log("send to: %d(%s) msg: %s", 0, ws._socket.remoteAddress, str);
