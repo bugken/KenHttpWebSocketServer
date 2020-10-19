@@ -29,7 +29,9 @@ var g_white_list_switch = 1;
 
 //在线人数插入数据
 function users_online_write(){
-	console.log("users_online_write");
+	var msg = util.format("users_online_write users online number:%d", g_map_ws_container.size);
+	if(g_switch_more_log == 1)
+		console.log(msg);//不写日志，web请求在线人数时候有打印信息
 	g_ms_db.db_users_online_writer(g_map_ws_container.size);
 }
 //离线时间更新到数据库
