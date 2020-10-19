@@ -4,9 +4,10 @@ const util = require("util");
 const fs = require('fs');
 const moment = require('moment');
 const g_messages = require('./messages.json');
-//const g_ms_db = require('./ms_db');
+const g_ms_db = require('./ms_db');
 const g_interval_fixup = setInterval(fixup_users_online, 5*60*1000);
 const g_interval_kickoffallusers = setInterval(kickoff_all_user_in_maintenance, 30*1000);
+const g_interval_user_online_record = setInterval(users_online_write, 60*1000);
 //const g_interval_heartbeat = setInterval(heart_beat_check, 20*60*1000);
 const g_websocket_server_port = 9001;
 const g_http_server_port = 9002;
@@ -29,8 +30,9 @@ var g_http_ip_white_list_set = new Set();
 var g_white_list_switch = 1;
 
 //在线人数插入数据
-function users_num_online(){
-	console.log(users_num_online);
+function users_online_write(){
+	console.log("users_online_write");
+	g_ms_db.db_users_online_writer(g_map_ws_container.size);
 }
 //离线时间更新到数据库
 function offline_time_update(){
@@ -620,3 +622,7 @@ g_ws_server.on("connection", function connection(ws, req) {
 		}
 	});
 });
+
+module.exports = {
+	log_writer
+}
