@@ -1,7 +1,7 @@
 const mssql = require("mssql");
 const util = require("util");
 const moment = require("moment");
-const logger = require("./http_websocket_server");
+const common = require("./common");
 
 var config = {
   user: 'sa',
@@ -36,14 +36,14 @@ function db_execute_sql(sql, params, callBack) {
           if (err){
             var msg = util.format("db_execute_sql prepare %s", err);
             console.log(msg);
-            logger.log_writer(msg);
+            common.log_writer(msg);
           }
           ps.execute(params, function (err, recordset) {
             callBack(err, recordset);
             if (err){
               var msg = util.format("db_execute_sql execute %s", err);
               console.log(msg);
-              logger.log_writer(msg);
+              common.log_writer(msg);
             }
             ps.unprepare(function (err) {});
           });

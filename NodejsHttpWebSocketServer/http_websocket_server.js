@@ -1,10 +1,9 @@
 const WebSocket = require("ws");
 const http = require("http");
 const util = require("util");
-const fs = require('fs');
-const moment = require('moment');
-const g_messages = require('./messages.json');
-const g_ms_db = require('./ms_db');
+const moment = require("moment");
+const common = require("./common");
+const g_ms_db = require("./ms_db");
 const g_interval_fixup = setInterval(fixup_users_online, 5*60*1000);
 const g_interval_kickoffallusers = setInterval(kickoff_all_user_in_maintenance, 30*1000);
 const g_interval_user_online_record = setInterval(users_online_write, 60*1000);
@@ -22,8 +21,7 @@ var g_maintenance_message = "";
 var g_announcement_message = "";
 var g_switch_more_log = 0;
 var g_switch_less_log = 1;//针对http和弹框消息	
-var g_log_file = "ws_http.log";
-var g_message_file = "messages.json";
+
 var g_http_ip_white_list_set = new Set();
 	g_http_ip_white_list_set.add("47.56.7.183");//增加IP白名单
 	g_http_ip_white_list_set.add("127.0.0.1");
@@ -49,54 +47,43 @@ function fixup_users_online(){
 		for (var item of g_map_ws_container.entries()) {
 			item[1].close();
 			var user_info = util.format("fixup_users_online userid:%d close.", item[0]);
-			log_writer(user_info);
+			common.log_writer(user_info);
 			if(g_switch_more_log == 1)
 				console.log(user_info);
 		}
 	}
 	g_map_ws_container.clear();
 	var msg = util.format("fixup_users_online fixup users size:%d", size);
-	log_writer(msg);
+	common.log_writer(msg);
 	if(g_switch_less_log == 1)
 		console.log(msg);
 }
 //登录消息，维护消息初始化与持久化
-g_maintenance_message = g_messages["maintenance_message"];
-g_login_message_to_all = g_messages["login_message"];
-g_announcement_message = g_messages["announcement_message"];
+g_maintenance_message = common.g_messages["maintenance_message"];
+g_login_message_to_all = common.g_messages["login_message"];
+g_announcement_message = common.g_messages["announcement_message"];
 var msg = util.format("read maintenance message:%s", g_maintenance_message);
 console.log(msg);
-log_writer(msg);
+common.log_writer(msg);
 msg = util.format("read login message:%s", g_login_message_to_all);
 console.log(msg);
-log_writer(msg);
+common.log_writer(msg);
 msg = util.format("read announcement message:%s", g_announcement_message);
 console.log(msg);
-log_writer(msg);
-//保存消息到文件
-function save_msg_to_file(){
-	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all, "announcement_message":g_announcement_message};
-	var jsonstr = JSON.stringify(json_src);
-	fs.appendFileSync(g_message_file, jsonstr, {flag:'w'});
-}
-//写日志
-function log_writer(log_message){
-	var date = moment().format("YYYY-MM-DD HH:mm:ss");
-	fs.appendFileSync(g_log_file, "[".concat(date).concat("]").concat(log_message).concat("\n"),{flag:'a'});
-}
+common.log_writer(msg);
 //打印在线人数信息，包括在线人数数量和useid
 function dump_users_info(){
 	var clients_size = util.format("dump_users_info g_ws_server.clients.size:%d", g_ws_server.clients.size);
 	console.log(clients_size);
-	log_writer(clients_size);
+	common.log_writer(clients_size);
 	var map_size = util.format("dump_users_info g_map_ws_container size:%d", g_map_ws_container.size);
 	console.log(map_size);
-	log_writer(map_size);
+	common.log_writer(map_size);
 
 	for (var item of g_map_ws_container.entries()) {
 		var user_info = util.format("dump_users_info userid:%d online.", item[0]);
 		console.log(user_info);
-		log_writer(user_info);
+		common.log_writer(user_info);
 	}
 	json = {"ret":0, "error_message":""};
 	return json;
@@ -105,18 +92,18 @@ function dump_users_info(){
 function dump_message(){
 	var msg = util.format("dump_message g_maintenance_message:%s", g_maintenance_message);
 	console.log(msg);
-	log_writer(msg);
+	common.log_writer(msg);
 	msg = util.format("dump_message login message to all:%s", g_login_message_to_all);
 	console.log(msg);
-	log_writer(msg);
+	common.log_writer(msg);
 	msg = util.format("dump_message announcement message:%s", g_announcement_message);
 	console.log(msg);
-	log_writer(msg);
+	common.log_writer(msg);
 
 	for (var item of g_map_userid_login_message.entries()) {
 		msg = util.format("dump_message message to userid:%d %s.", item[0], item[1]);
 		console.log(msg);
-		log_writer(msg);
+		common.log_writer(msg);
 	}
 	json = {"ret":0, "error_message":""};
 	return json;
@@ -124,7 +111,7 @@ function dump_message(){
 //清空所有登录信息，维护信息
 function clear_message(){
 	var msg = util.format("clear_message");
-	log_writer(msg);
+	common.log_writer(msg);
 	if(g_switch_less_log == 1)
 		console.log(msg);
 
@@ -132,14 +119,14 @@ function clear_message(){
 	g_login_message_to_all = "";
 	g_announcement_message = "";
 	g_map_userid_login_message.clear();
-	save_msg_to_file();//更新文件
+	common.save_msg_to_file();//更新文件
 	json = {"ret":0, "error_message":""};
 	return json;
 }
 //清空单个用户登录信息，单个用户登录信息不写文件
 function clear_userid_login_msg(json_data){
 	var msg = util.format("clear_userid_login_msg userid:%d", json_data.userid);
-	log_writer(msg);
+	common.log_writer(msg);
 	if(g_switch_less_log == 1)
 		console.log(msg);
 
@@ -148,7 +135,7 @@ function clear_userid_login_msg(json_data){
 		g_map_userid_login_message.delete(json_data.userid);
 	}else{
 		error_message = util.format("there is no login message for userid:%d", json_data.userid);
-		log_writer(error_message);
+		common.log_writer(error_message);
 	}
 	json = {"ret":0, "error_message":error_message};
 	return json;
@@ -156,7 +143,7 @@ function clear_userid_login_msg(json_data){
 //打印信息开关
 function log_switch(json_data){
 	var msg = util.format("log_switch log_more:%d log_less:%d", json_data.log_more, json_data.log_less);
-	log_writer(msg);
+	common.log_writer(msg);
 	if(g_switch_less_log == 1)
 		console.log(msg);
 
@@ -186,7 +173,7 @@ function query_user_is_online(json_data){
 			status = "online";
 	}
 	var msg = util.format("user:%d now is %s", json_data.userid, status);
-	log_writer(msg);
+	common.log_writer(msg);
 	if (g_switch_less_log == 1)
 		console.log(msg);
 	var json = {"ret":0, "return_message":status};
@@ -203,7 +190,7 @@ function broadcast_message(msgid, type, message){
 		item[1].send(str);
 
 		var msg = util.format("broadcast_message msgid:%d, userid:%d(%s) type:%d message:%s", msgid, item[0], item[1]._socket.remoteAddress, type, message);
-		log_writer(msg);
+		common.log_writer(msg);
 		if (g_switch_less_log == 1)
 			console.log(msg);
 	}
@@ -223,7 +210,7 @@ function notify_message(userid, type, message){
 		ret = -1;
 		msg = util.format("notify_message userid:%d 不在线", userid);
 	}
-	log_writer(msg);
+	common.log_writer(msg);
 	if (g_switch_less_log == 1)
 		console.log(msg);
 
@@ -255,7 +242,7 @@ function update_login_message(json_data){
 	var msg = util.format("update_login_message type:%d userid:%d message:%s.", json_data.type, json_data.userid, json_data.message);
 	if(g_switch_less_log == 1)
 		console.log(msg);
-	log_writer(msg);
+	common.log_writer(msg);
 
 	var ret = 0;
 	var error_message = "";
@@ -275,7 +262,7 @@ function update_login_message(json_data){
 		ret = -1;
 		error_message = util.format("userid %d 不正确", json_data.userid);
 	}
-	save_msg_to_file();//持久化
+	common.save_msg_to_file();//持久化
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
@@ -284,7 +271,7 @@ function update_maintenance_message(json_data){
 	var msg = util.format("update_maintenance_message type:%d message:%s.", json_data.type, json_data.message);
 	if(g_switch_less_log == 1)
 		console.log(msg);
-	log_writer(msg);
+	common.log_writer(msg);
 
 	if(json_data.type == 1){
 		g_maintenance_message = json_data.message;
@@ -293,7 +280,7 @@ function update_maintenance_message(json_data){
 	else if(json_data.type == 0){
 		g_maintenance_message = "";
 	}
-	save_msg_to_file();
+	common.save_msg_to_file();
 	json = {"ret":0, "error_message":""};
 	return json;
 }
@@ -302,7 +289,7 @@ function handle_pop_login_message(json_data){
 	var msg = util.format("handle_pop_login_message type:%d userid:%d message:%s.", json_data.type, json_data.userid, json_data.message);
 	if(g_switch_less_log == 1)
 		console.log(msg);
-	log_writer(msg);
+	common.log_writer(msg);
 
 	var ret = 0;
 	var error_message = "";
@@ -326,7 +313,7 @@ function handle_pop_login_message(json_data){
 		ret = -1;
 		error_message = util.format("userid %d 不正确", json_data.userid);
 	}
-	save_msg_to_file();//持久化
+	common.save_msg_to_file();//持久化
 
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
@@ -355,7 +342,7 @@ function kickoff_all_user_in_maintenance(){
 			g_map_ws_container.delete(item[0]);
 			item[1].close();
 			var kickoff_info = util.format("kickoff_all_user_in_maintenance userid:%d message:%s", item[0], g_maintenance_message);
-			log_writer(kickoff_info);
+			common.log_writer(kickoff_info);
 			if(g_switch_less_log == 1)
 				console.log(kickoff_info);
 		}
@@ -374,7 +361,7 @@ function update_announcement_message(json_data){
 	var msg = util.format("update_announcement_message type:%d message:%s.", json_data.type, json_data.message);
 	if(g_switch_less_log == 1)
 		console.log(msg);
-	log_writer(msg);
+	common.log_writer(msg);
 
 	if(json_data.type == 1){
 		g_announcement_message = json_data.message;
@@ -385,7 +372,7 @@ function update_announcement_message(json_data){
 	//无论下发还是取消滚动消息都要发给客户端
 	broadcast_message(200001, 4, g_announcement_message);
 
-	save_msg_to_file();
+	common.save_msg_to_file();
 	json = {"ret":0, "error_message":""};
 	return json;
 }
@@ -395,7 +382,7 @@ function white_list_switch(json_data){
 		var msg = util.format("white_list_switch type:%d", json_data.switch);
 		if(g_switch_less_log == 1)
 			console.log(msg);
-		log_writer(msg);
+		common.log_writer(msg);
 		json = {"ret":0, "error_message":""};
 		return json;
 }
@@ -406,7 +393,7 @@ function kickoff_all_user(json_data){
 		g_map_ws_container.delete(item[0]);
 		item[1].close();
 		var kickoff_info = util.format("kickoff_all_user userid:%d message:%s", item[0], g_maintenance_message);
-		log_writer(kickoff_info);
+		common.log_writer(kickoff_info);
 		if(g_switch_less_log == 1)
 			console.log(kickoff_info);
 	}
@@ -420,7 +407,7 @@ g_http_server.setTimeout(5 * 60 * 1000);
 g_http_server.on("listening", function () {
 	var log_message = util.format("http server start listenning on port %d.", g_http_server_port);
 	console.log(log_message);
-	log_writer(log_message);
+	common.log_writer(log_message);
 });
 //接收到客户端请求时触发
 g_http_server.on("request", function (req, res) {
@@ -432,7 +419,7 @@ g_http_server.on("request", function (req, res) {
 	}); 
 	req.on("end",function(){
 		var log_message = util.format("http received data from web(%s):%s", req.connection.remoteAddress, data);  
-		log_writer(log_message);
+		common.log_writer(log_message);
 		if (g_switch_less_log == 1)
 			console.log(log_message);
 
@@ -474,7 +461,7 @@ g_http_server.on("request", function (req, res) {
 
 			res.end(JSON.stringify(retStr));
 			var log_message = util.format("reply to web(%s):%s", req.connection.remoteAddress, JSON.stringify(retStr));
-			log_writer(log_message);
+			common.log_writer(log_message);
 			if (g_switch_less_log == 1)
 				console.log(log_message);
 		}
@@ -483,7 +470,7 @@ g_http_server.on("request", function (req, res) {
 
 			var log_message = util.format("Exception error:%s", e.message);
 			console.log(log_message);
-			log_writer(log_message);
+			common.log_writer(log_message);
 		}
 	});   
 });
@@ -494,7 +481,7 @@ g_http_server.on("connection", function (socket) {
 		var log = util.format("socket ip(%s) not in whitelist,destroy socket.", socket.remoteAddress);
 		console.log(log);
 		if(g_switch_less_log == 1)
-			log_writer(log);
+			common.log_writer(log);
 	}		
 	return;
 });
@@ -582,7 +569,7 @@ function ws_notify_message(ws){
 g_ws_server.on("listening", function listen(){
 	var log_message = util.format("websocket server start listenning on port %d.", g_websocket_server_port);
 	console.log(log_message);
-	log_writer(log_message);
+	common.log_writer(log_message);
 });
 //接收到客户端请求时触发
 g_ws_server.on("connection", function connection(ws, req) {
@@ -605,7 +592,7 @@ g_ws_server.on("connection", function connection(ws, req) {
 		catch(e){
 			var log_message = util.format("Exception error:%s", e.message);
 			console.log(log_message);
-			log_writer(log_message);
+			common.log_writer(log_message);
 		}
 	});
 	//客户端关闭调用
@@ -622,7 +609,3 @@ g_ws_server.on("connection", function connection(ws, req) {
 		}
 	});
 });
-
-module.exports = {
-	log_writer
-}
