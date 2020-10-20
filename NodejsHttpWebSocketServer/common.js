@@ -11,8 +11,8 @@ function log_writer(log_message){
 	fs.appendFileSync(g_log_file, "[".concat(date).concat("]").concat(log_message).concat("\n"),{flag:'a'});
 }
 //保存消息到文件
-function save_msg_to_file(){
-	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all, "announcement_message":g_announcement_message};
+function save_msg_to_file(json_src){
+	//var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all, "announcement_message":g_announcement_message};
 	var jsonstr = JSON.stringify(json_src);
 	fs.appendFileSync(g_message_file, jsonstr, {flag:'w'});
 }

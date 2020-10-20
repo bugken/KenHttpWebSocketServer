@@ -121,7 +121,8 @@ function clear_message(){
 	g_login_message_to_all = "";
 	g_announcement_message = "";
 	g_map_userid_login_message.clear();
-	common.save_msg_to_file();//更新文件
+	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all, "announcement_message":g_announcement_message};
+	common.save_msg_to_file(json_src);//更新文件
 	json = {"ret":0, "error_message":""};
 	return json;
 }
@@ -264,7 +265,8 @@ function update_login_message(json_data){
 		ret = -1;
 		error_message = util.format("userid %d 不正确", json_data.userid);
 	}
-	common.save_msg_to_file();//持久化
+	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all, "announcement_message":g_announcement_message};
+	common.save_msg_to_file(json_src);//持久化
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
@@ -282,7 +284,8 @@ function update_maintenance_message(json_data){
 	else if(json_data.type == 0){
 		g_maintenance_message = "";
 	}
-	common.save_msg_to_file();
+	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all, "announcement_message":g_announcement_message};
+	common.save_msg_to_file(json_src);
 	json = {"ret":0, "error_message":""};
 	return json;
 }
@@ -315,7 +318,8 @@ function handle_pop_login_message(json_data){
 		ret = -1;
 		error_message = util.format("userid %d 不正确", json_data.userid);
 	}
-	common.save_msg_to_file();//持久化
+	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all, "announcement_message":g_announcement_message};
+	common.save_msg_to_file(json_src);//持久化
 
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
@@ -374,7 +378,8 @@ function update_announcement_message(json_data){
 	//无论下发还是取消滚动消息都要发给客户端
 	broadcast_message(200001, 4, g_announcement_message);
 
-	common.save_msg_to_file();
+	var json_src = {"maintenance_message":g_maintenance_message, "login_message":g_login_message_to_all, "announcement_message":g_announcement_message};
+	common.save_msg_to_file(json_src);
 	json = {"ret":0, "error_message":""};
 	return json;
 }
