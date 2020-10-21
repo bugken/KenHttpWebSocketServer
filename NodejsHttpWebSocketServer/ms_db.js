@@ -47,6 +47,9 @@ function db_execute_sql(sql, params, callBack) {
             }
             ps.unprepare(function (err) {});
           });
+          var msg = "insert users online num done";
+          console.log(msg);
+          common.log_writer(msg);
       });
   });
 };
