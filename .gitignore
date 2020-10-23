@@ -1,4 +1,3 @@
 #M项目忽略文件以及文件夹
 NodejsHttpWebSocketServer/ws_http.log
 CppHttpWebSocketServer/Debug/
-CppHttpWebSocketServer/.vs/
