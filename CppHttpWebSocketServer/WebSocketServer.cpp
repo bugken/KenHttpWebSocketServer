@@ -37,6 +37,7 @@ static INT32 WSProtocolCallback(LWS* pWSI, ENUM_CALLBACK_REASON eReason,
 	case LWS_CALLBACK_ESTABLISHED:       // 当服务器和客户端完成握手后
 		lwsl_notice("LWS_CALLBACK_ESTABLISHED\n");
 		//在此存入客户端的socket
+
 		break;
 
 	case LWS_CALLBACK_RECEIVE:           // 当接收到客户端发来的帧以后
@@ -58,7 +59,7 @@ static INT32 WSProtocolCallback(LWS* pWSI, ENUM_CALLBACK_REASON eReason,
 		pSessionData = NULL;
 		break;
 
-	case LWS_CALLBACK_SERVER_WRITEABLE:   // 当此连接可写时
+	case LWS_CALLBACK_SERVER_WRITEABLE:   //当此连接可写时 当连接的数据缓存中有数据的时候，会出发可写回调
 		lwsl_notice("LWS_CALLBACK_SERVER_WRITEABLE\n");
 		if (pSessionData->iLen > 0)
 		{
@@ -81,7 +82,8 @@ static INT32 WSProtocolCallback(LWS* pWSI, ENUM_CALLBACK_REASON eReason,
 * 你需要为每种协议提供回调函数
 * 格式:协议名称，协议回调，接收缓冲区大小
 */
-LWS_PROTOCOLS ArrLWSProtocols[] = {
+LWS_PROTOCOLS ArrLWSProtocols[] = 
+{
 	{"ws", WSProtocolCallback, sizeof(SESSIONDATA), MAX_PAYLOAD_SIZE,},
 	{NULL, NULL, 0}// 最后一个元素固定为此格式
 };
