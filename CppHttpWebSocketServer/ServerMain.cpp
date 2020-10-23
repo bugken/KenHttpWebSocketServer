@@ -2,7 +2,7 @@
 #include "WebSocketServer.h"
 
 static bool g_bIsRunning = true;
-void SigIntHandler(int sig)
+void SigIntHandler(INT32 iSignal)
 {
 	//数据持久化
 	g_bIsRunning = false;
