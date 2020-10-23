@@ -12,7 +12,6 @@ WebSocketServer::WebSocketServer(UINT32 uiListenPort)
 //析构函数
 WebSocketServer::~WebSocketServer()
 {
-	lwsl_notice("析构完成\n");
 }
 
 //拷贝构造
@@ -31,9 +30,14 @@ INT32 WebSocketServer::GetPort()
 static INT32 WSProtocolCallback(LWS* pWSI, ENUM_CALLBACK_REASON eReason,
 	void *pUser, void *pInData, size_t iLen)
 {
-	SESSIONDATA* pSessionData = (SESSIONDATA*)pUser;
+	//SESSIONDATA* pSessionData = (SESSIONDATA*)pUser;
+	unsigned char szInfoReturn[LWS_PRE + 200];
+	memset(szInfoReturn, 0, sizeof(szInfoReturn));
+	UINT32 uiSize = 0;
+	unsigned char szTmpData[] = "helloworld";
 
-	switch (eReason) {
+	switch (eReason) 
+	{
 	case LWS_CALLBACK_ESTABLISHED:       // 当服务器和客户端完成握手后
 		lwsl_notice("LWS_CALLBACK_ESTABLISHED\n");
 		//在此存入客户端的socket
@@ -42,31 +46,13 @@ static INT32 WSProtocolCallback(LWS* pWSI, ENUM_CALLBACK_REASON eReason,
 
 	case LWS_CALLBACK_RECEIVE:           // 当接收到客户端发来的帧以后
 		lwsl_notice("LWS_CALLBACK_RECEIVE\n");
-		// 判断是否最后一帧
-		pSessionData->bIsFin = (lws_is_final_fragment(pWSI) != 0);
-		// 判断是否二进制消息
-		pSessionData->bIsBinary = (lws_frame_is_binary(pWSI) != 0);
-		// 对服务器的接收端进行流量控制，如果来不及处理，可以控制之
-		// 下面的调用禁止在此连接上接收数据
-		//lws_rx_flow_control(wsi, 0);
-		
-		// 业务处理部分，为了实现Echo服务器，把客户端数据保存起来
-		memcpy(&pSessionData->szBuffer[LWS_PRE], pInData, iLen);
-		pSessionData->iLen= iLen;
-		//lwsl_notice("recvied message:%s\n", &data->buf[LWS_PRE]);
-		// 需要给客户端应答时，触发一次写回调
-		//lws_callback_on_writable(wsi);
-		pSessionData = NULL;
+		uiSize = sizeof(szTmpData) - 1;
+		memcpy(&szInfoReturn[LWS_PRE], szTmpData, uiSize);
+		lws_write(pWSI, &szInfoReturn[LWS_PRE], uiSize, LWS_WRITE_TEXT);
 		break;
 
 	case LWS_CALLBACK_SERVER_WRITEABLE:   //当此连接可写时 当连接的数据缓存中有数据的时候，会出发可写回调
 		lwsl_notice("LWS_CALLBACK_SERVER_WRITEABLE\n");
-		if (pSessionData->iLen > 0)
-		{
-			lws_write(pWSI, &pSessionData->szBuffer[LWS_PRE], pSessionData->iLen, LWS_WRITE_TEXT);
-		}
-		// 下面的调用允许在此连接上接收数据
-		//lws_rx_flow_control(wsi, 1);
 		break;
 	case LWS_CALLBACK_CLOSED:
 		lwsl_notice("LWS_CALLBACK_CLOSED\n");
