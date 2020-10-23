@@ -41,6 +41,8 @@ public:
 
 	void Destroy();
 
+	void ServerStart();
+
 private:
 	UINT32  m_uiPort;//WebSocket·þÎñ¶Ë¿ÚºÅ
 };

@@ -86,6 +86,7 @@ LWS_PROTOCOLS ArrLWSProtocols[] = {
 	{NULL, NULL, 0}// 最后一个元素固定为此格式
 };
 
+//初始化服务器
 void WebSocketServer::Init()
 {
 	g_stContextInfo.port = 8000;
@@ -96,6 +97,7 @@ void WebSocketServer::Init()
 	g_stContextInfo.options = LWS_SERVER_OPTION_VALIDATE_UTF8;
 }
 
+//设置ssl(不使用ssl则传空，使用则传入证书文件路径)
 int WebSocketServer::SetSSL(const char* pCAFilePath, const char* pServerCertFilePath, 
 	const char* pServerPrivateKeyFilePath, bool bIsSupportSSL)
 {
@@ -117,6 +119,7 @@ int WebSocketServer::SetSSL(const char* pCAFilePath, const char* pServerCertFile
 	return bIsSupportSSL;
 }
 
+//创建服务器
 int WebSocketServer::Create()
 {
 	g_pContext = lws_create_context(&g_stContextInfo);
@@ -127,12 +130,30 @@ int WebSocketServer::Create()
 	return 1;
 }
 
+//运行
 INT32 WebSocketServer::Run(UINT32 uiWaitTimeMs)
 {
 	return lws_service(g_pContext, uiWaitTimeMs);
 }
 
+//销毁资源
 void WebSocketServer::Destroy()
 {
 	lws_context_destroy(g_pContext);
+}
+
+//启动服务器，供外部调用
+void WebSocketServer::ServerStart()
+{
+	Init();
+	Create();
+
+	//服务器运行(运行时可设置间隔等待时间，这里为1000，单位为ms)
+	INT32 iRet = 0;
+	while (iRet >= 0)
+	{
+		lwsl_notice("run\n");
+		iRet = Run(1000);
+	}
+	Destroy();
 }
