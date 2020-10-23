@@ -131,9 +131,9 @@ int WebSocketServer::Create()
 }
 
 //运行
-INT32 WebSocketServer::Run(UINT32 uiWaitTimeMs)
+INT32 WebSocketServer::Run()
 {
-	return lws_service(g_pContext, uiWaitTimeMs);
+	return lws_service(g_pContext, 0);
 }
 
 //销毁资源
@@ -153,7 +153,7 @@ void WebSocketServer::ServerStart()
 	while (iRet >= 0)
 	{
 		lwsl_notice("run\n");
-		iRet = Run(1000);
+		iRet = Run();
 	}
 	Destroy();
 }

@@ -37,7 +37,7 @@ public:
 
 	INT32 Create();
 
-	INT32 Run(UINT32 uiWaitTimeMs);
+	INT32 Run();
 
 	void Destroy();
 
