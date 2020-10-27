@@ -13,7 +13,7 @@ int main()
 {
 	signal(SIGINT, SigIntHandler);
 
-	WebSocketServer webSocketServer(8000);
+	WebSocketServer webSocketServer(8888);
 	webSocketServer.ServerStart();
 
 	return 0;

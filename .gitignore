@@ -1,6 +1,7 @@
 #M项目忽略文件以及文件夹
 NodejsHttpWebSocketServer/ws_http.log
 CppHttpWebSocketServer/Debug/
+CppHttpWebSocketServer/Release/
 CppHttpWebSocketServer/.vs/
 CppHttpWebSocketServer/.vs/CppHttpWebSocketServer/v16/ipch/
 CppHttpWebSocketServer/.vs/CppHttpWebSocketServer/v16/Browse.VC.db

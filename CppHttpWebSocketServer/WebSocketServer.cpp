@@ -36,11 +36,14 @@ static INT32 WSProtocolCallback(LWS* pWSI, ENUM_CALLBACK_REASON eReason,
 	UINT32 uiSize = 0;
 	unsigned char szTmpData[] = "helloworld";
 
+	char szClientIP[20] = {0};
 	switch (eReason) 
 	{
 	case LWS_CALLBACK_ESTABLISHED:       // 当服务器和客户端完成握手后
 		lwsl_notice("LWS_CALLBACK_ESTABLISHED\n");
 		//在此存入客户端的socket
+		lws_get_peer_simple(pWSI, szClientIP, 20);
+		lwsl_notice("szClientIP:%s\n", szClientIP);
 
 		break;
 
@@ -49,13 +52,20 @@ static INT32 WSProtocolCallback(LWS* pWSI, ENUM_CALLBACK_REASON eReason,
 		uiSize = sizeof(szTmpData) - 1;
 		memcpy(&szInfoReturn[LWS_PRE], szTmpData, uiSize);
 		lws_write(pWSI, &szInfoReturn[LWS_PRE], uiSize, LWS_WRITE_TEXT);
+		lws_get_peer_simple(pWSI, szClientIP, 20);
+		lwsl_notice("szClientIP:%s\n", szClientIP);
 		break;
 
 	case LWS_CALLBACK_SERVER_WRITEABLE:   //当此连接可写时 当连接的数据缓存中有数据的时候，会出发可写回调
 		lwsl_notice("LWS_CALLBACK_SERVER_WRITEABLE\n");
+		lws_get_peer_simple(pWSI, szClientIP, 20);
+		lwsl_notice("szClientIP:%s\n", szClientIP);
 		break;
 	case LWS_CALLBACK_CLOSED:
 		lwsl_notice("LWS_CALLBACK_CLOSED\n");
+		lws_get_peer_simple(pWSI, szClientIP, 20);
+		lwsl_notice("szClientIP:%s\n", szClientIP);
+		
 		break;
 	}
 
@@ -77,7 +87,7 @@ LWS_PROTOCOLS ArrLWSProtocols[] =
 //初始化服务器
 void WebSocketServer::Init()
 {
-	g_stContextInfo.port = 8000;
+	g_stContextInfo.port = m_uiPort;
 	g_stContextInfo.iface = NULL; // 在所有网络接口上监听
 	g_stContextInfo.protocols = ArrLWSProtocols;
 	g_stContextInfo.gid = -1;
