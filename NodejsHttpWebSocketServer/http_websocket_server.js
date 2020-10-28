@@ -541,10 +541,7 @@ function handle_user_info(userid, ws){
 		ws_notify_message(ws);
 		return;
 	}
-	if(userid == 0){
-		ws_notify_message(ws);
-	}
-	else{//将userid ws加入map
+	if(userid != 0){//将userid ws加入map
 		g_map_ws_container.set(userid, ws);
 		//发送滚动消息三种情况1.Web端下发滚动消息 2.Web端取消滚动消息 3.在100001协议中userid不为0的时候
 		var json = {"id":200001, "arg":{"type":4, "message":g_announcement_message}};
