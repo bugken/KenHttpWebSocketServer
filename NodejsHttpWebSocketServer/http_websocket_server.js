@@ -333,7 +333,7 @@ function kickoff_user(json_data){
 			ret = notify_message(item[0], 3, json_data.message);
 			g_map_ws_container.delete(item[0]);
 			item[1].close();
-			var msg = util.format("kickoff_user userid:%d message:%s", item[0], g_maintenance_message);
+			var msg = util.format("kickoff_user userid:%d message:%s", item[0], json_data.message);
 			common.log_writer(msg);
 			if(g_switch_less_log == 1)
 				console.log(msg);
