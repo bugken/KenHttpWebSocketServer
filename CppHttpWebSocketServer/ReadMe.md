@@ -1,0 +1,2 @@
+1.基于开源库libwebsocket实现WebSocket服务端;目前WebSocketServer的业务逻辑还没有实现；
+2.基于libevent实现Http服务端;目前还没有将Http服务合入到这个项目，HttpServer的实现可以在KenWinControl项目中实现；
