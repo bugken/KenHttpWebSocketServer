@@ -324,19 +324,32 @@ function handle_pop_login_message(json_data){
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
-//踢玩家下线
+//踢玩家下线，使其重新登录
 function kickoff_user(json_data){
 	var error_message = "";
 	var ret = 0;
-	ret = notify_message(json_data.userid, 3, json_data.message);
-	if(ret == -1){
-		error_message = util.format("userid:%d 不在线", json_data.userid);
+	if (json_data.userid == 0){
+		for (var item of g_map_ws_container.entries()) {
+			ret = notify_message(item[0], 3, json_data.message);
+			g_map_ws_container.delete(item[0]);
+			item[1].close();
+			var msg = util.format("kickoff_user userid:%d message:%s", item[0], g_maintenance_message);
+			common.log_writer(msg);
+			if(g_switch_less_log == 1)
+				console.log(msg);
+		}
 	}
-	if(g_map_ws_container.has(json_data.userid))
-	{
-		g_map_ws_container.get(json_data.userid).close();
-		g_map_ws_container.delete(json_data.userid);
+	else{
+		ret = notify_message(json_data.userid, 3, json_data.message);
+		if(ret == -1){
+			error_message = util.format("userid:%d 不在线", json_data.userid);
+		}
+		if(g_map_ws_container.has(json_data.userid)){
+			g_map_ws_container.get(json_data.userid).close();
+			g_map_ws_container.delete(json_data.userid);
+		}
 	}
+
 	var json = {"ret":ret, "error_message":error_message};
 	return json;
 }
@@ -464,7 +477,7 @@ g_http_server.on("request", function (req, res) {
 			else if(datajson.id == 100007)//客户端强制刷新升级消息
 				retStr = client_update();
 			else if(datajson.id == 100008)//大厅滚动消息
-			retStr = update_announcement_message(datajson.arg);
+				retStr = update_announcement_message(datajson.arg);
 
 			res.end(JSON.stringify(retStr));
 			var log_message = util.format("reply to web(%s):%s", req.connection.remoteAddress, JSON.stringify(retStr));
